@@ -5,4 +5,5 @@ After=network-online.target
 
 [Service]
 Type=oneshot
+EnvironmentFile=-/etc/default/readmyvin-update
 ExecStart=/usr/local/bin/readmyvin-update.sh
