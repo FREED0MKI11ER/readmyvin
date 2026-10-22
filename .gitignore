@@ -1,0 +1,21 @@
+# Runtime data / databases (never deploy or commit)
+*.db
+*.db-wal
+*.db-shm
+counter.txt
+*.log
+tsb_data/
+
+# Compiled binaries
+counter
+counter.new
+counter_binary
+go-vindecoder
+dist/
+pkg/
+
+# Local leftovers / backups
+_check.js
+Backupcounter.go
+new_caddyfile.txt
+*.bak

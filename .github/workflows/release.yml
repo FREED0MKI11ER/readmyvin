@@ -1,0 +1,79 @@
+name: Build & publish
+
+# Builds the Linux server bundle and (re)publishes a rolling "latest" release.
+# The server polls that release every 10 minutes via readmyvin-update.timer.
+#
+# Triggers: push to main, or manual run.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Compute version
+        id: ver
+        run: echo "short=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp version into frontend assets
+        run: |
+          set -euo pipefail
+          V="${{ steps.ver.outputs.short }}"
+          sed -i "s/const VERSION = '[^']*'/const VERSION = '$V'/" index.html
+          sed -i "s/const CACHE_NAME = '[^']*'/const CACHE_NAME = 'vin-decoder-$V'/" sw.js
+
+      - name: Build server binary (linux/amd64)
+        env:
+          CGO_ENABLED: "0"
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          go build -trimpath \
+            -ldflags "-s -w -X main.Version=${{ steps.ver.outputs.short }}" \
+            -o dist/counter counter.go
+
+      - name: Package bundle
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.ver.outputs.short }}"
+          ASSETS="index.html dtc.html scanner.js scanner.css sw.js manifest.json robots.txt sitemap.xml og-image.svg icon-180x180.png icon-192x192.png icon-512x512.png maintenance-data-v3.json"
+          mkdir -p pkg
+          cp dist/counter pkg/counter
+          printf '%s\n' "$VERSION" > pkg/VERSION
+          for f in $ASSETS; do cp "$f" "pkg/$f"; done
+          printf '%s\n' $ASSETS > pkg/FILES
+          tar -C pkg -czf dist/vindecoder-linux-amd64.tar.gz .
+          ( cd dist && sha256sum vindecoder-linux-amd64.tar.gz > SHA256SUMS.txt )
+          echo "---- checksums ----"
+          cat dist/SHA256SUMS.txt
+
+      - name: Publish rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: latest
+          body: |
+            Automated build of `${{ steps.ver.outputs.short }}`.
+
+            The server picks this up automatically on its next 10-minute check.
+          make_latest: true
+          files: |
+            dist/vindecoder-linux-amd64.tar.gz
+            dist/SHA256SUMS.txt

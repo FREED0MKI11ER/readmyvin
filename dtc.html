@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#a855f7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DTC Lookup">
+<meta name="description" content="Free OBD-II DTC code lookup — search diagnostic trouble codes with common causes, severity, and related codes">
+<meta property="og:type" content="website">
+<meta property="og:title" content="DTC Lookup — Free OBD-II Trouble Code Reference">
+<meta property="og:description" content="Search any OBD-II diagnostic trouble code. Get severity ratings, common causes, related codes, and technical notes. SAE J2012 / ISO 15031-6 standardized.">
+<meta property="og:url" content="https://readmyvin.com/dtc">
+<meta property="og:site_name" content="ReadMyVIN">
+<meta property="og:image" content="https://readmyvin.com/og-image.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180x180.png">
+<title>DTC Lookup — ReadMyVIN</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "OBD-II DTC Lookup",
+  "description": "Free OBD-II DTC code lookup — search diagnostic trouble codes with common causes, severity, and related codes.",
+  "url": "https://readmyvin.com/dtc",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c0f'/%3E%3Crect x='1' y='1' width='30' height='30' rx='5' fill='none' stroke='%23252a35' stroke-width='1'/%3E%3Ctext x='16' y='21' text-anchor='middle' font-family='monospace' font-weight='bold' font-size='12' fill='%23a855f7'%3EDTC%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html{overflow-x:hidden}
+  :root{--bg:#0a0c0f;--surface:#12151a;--surface2:#1a1e26;--border:#252a35;--border-glow:#2a3a4a;--text:#e0e4ec;--text-dim:#8b95a5;--text-muted:#5a6577;--accent:#a855f7;--accent-dim:#a855f730;--accent-glow:#a855f718;--warn:#f59e0b;--error:#ef4444;--success:#10b981;--blue:#3b82f6;--purple:#a855f7;--p-color:#f59e0b;--u-color:#f87171;--b-color:#a78bfa;--c-color:#34d399}
+  body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background:linear-gradient(var(--border)1px,transparent 1px),linear-gradient(90deg,var(--border)1px,transparent 1px);background-size:60px 60px;opacity:.15;pointer-events:none;z-index:0}
+  body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,var(--accent-glow)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,#3b82f610 0%,transparent 50%);pointer-events:none;z-index:0}
+  .app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:40px 20px 80px}
+  .header{text-align:center;margin-bottom:32px}
+  .header h1{font-family:'Archivo Black',sans-serif;font-size:clamp(32px,5vw,48px);letter-spacing:-1px;line-height:1.1;background:linear-gradient(135deg,#fff 0%,#99a3b3 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .header h1 .obd{-webkit-text-fill-color:var(--accent)}
+  .header p{color:var(--text-dim);margin-top:12px;font-size:16px;font-weight:300}
+
+  .fixed-btns{position:fixed;top:20px;right:20px;z-index:50;display:flex;gap:8px}
+  .fixed-btn{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:12px;padding:10px 14px;border-radius:10px;cursor:pointer;transition:all .2s;text-decoration:none}
+  .fixed-btn:hover{border-color:var(--accent);color:var(--accent)}
+.fixed-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .fixed-btn .hcount{background:var(--accent);color:var(--bg);font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center}
+  .top-btn{opacity:0;pointer-events:none;transform:translateY(-8px);transition:all .3s}
+  .top-btn.visible{opacity:1;pointer-events:auto;transform:translateY(0)}
+
+  .controls{position:sticky;top:0;z-index:10;background:var(--bg);padding:12px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px}
+  .search-wrap{position:relative;margin-bottom:12px}
+  .search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:16px;pointer-events:none}
+  .search-box{width:100%;padding:14px 16px 14px 44px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:16px;outline:none;transition:border-color .2s,box-shadow .2s}
+  .search-box:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.search-box:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .search-box::placeholder{color:var(--text-muted);font-family:'Outfit',sans-serif;font-weight:400}
+  .multi-hint{display:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-top:6px}
+  .multi-hint.show{display:block}
+
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap}
+  .fbtn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-dim);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;transition:all .2s;user-select:none}
+.fbtn:hover{border-color:var(--accent);color:var(--text)}
+.fbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fbtn.on{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+  .fbtn.on-p{background:var(--p-color);border-color:var(--p-color);color:#000}
+  .fbtn.on-u{background:var(--u-color);border-color:var(--u-color);color:#fff}
+  .fbtn.on-b{background:var(--b-color);border-color:var(--b-color);color:#000}
+  .fbtn.on-c{background:var(--c-color);border-color:var(--c-color);color:#000}
+  .result-count{color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:12px;display:block}
+
+  /* Recent lookups drawer */
+  .recent-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90;opacity:0;pointer-events:none;transition:opacity .3s}
+  .recent-overlay.open{opacity:1;pointer-events:auto}
+  .recent-drawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:90vw;background:var(--bg);border-left:1px solid var(--border);z-index:100;transform:translateX(100%);transition:transform .3s ease;display:flex;flex-direction:column}
+  .recent-drawer.open{transform:translateX(0)}
+  .recent-drawer-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+  .drawer-title{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--text)}
+  .drawer-close{background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .2s}
+  .drawer-close:hover{background:var(--surface);color:var(--text)}
+  .recent-controls{display:flex;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+  .recent-controls input{flex:1;font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);outline:none}
+  .recent-controls input:focus{border-color:var(--accent)}
+  .recent-controls input::placeholder{color:var(--text-muted)}
+  .recent-clear-btn{font-family:'JetBrains Mono',monospace;font-size:11px;background:none;border:1px solid var(--border);color:var(--text-muted);padding:8px 12px;border-radius:8px;cursor:pointer;transition:all .2s;white-space:nowrap}
+  .recent-clear-btn:hover{border-color:var(--error);color:var(--error)}
+  .recent-list{flex:1;overflow-y:auto}
+  .recent-list-empty{padding:24px 20px;text-align:center;color:var(--text-muted);font-size:13px;font-family:'JetBrains Mono',monospace}
+  .recent-item{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;gap:12px}
+  .recent-item:last-child{border-bottom:none}
+  .recent-item:hover{background:var(--surface)}
+  .recent-item-left{flex:1;min-width:0}
+  .recent-item-code{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;letter-spacing:1px}
+  .recent-item-desc{font-size:12px;color:var(--text-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .recent-item-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);white-space:nowrap;flex-shrink:0}
+  .recent-item-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:4px;transition:color .2s;flex-shrink:0}
+  .recent-item-del:hover{color:var(--error)}
+  .recent-item.p .recent-item-code{color:var(--p-color)}
+  .recent-item.u .recent-item-code{color:var(--u-color)}
+  .recent-item.b .recent-item-code{color:var(--b-color)}
+  .recent-item.c .recent-item-code{color:var(--c-color)}
+
+  .recent-btn{font-family:'JetBrains Mono',monospace;font-size:12px;background:none;border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:8px;cursor:pointer;transition:all .2s}
+  .recent-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* DTC Cards */
+  .dtc-list{display:flex;flex-direction:column;gap:8px}
+  .dtc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .3s}
+  .dtc-card:hover{border-color:var(--border-glow)}
+  .dtc-card-main{padding:16px 20px;cursor:pointer}
+  .dtc-card-header{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+  .dtc-code{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700}
+  .dtc-code.p{color:var(--p-color)}.dtc-code.u{color:var(--u-color)}.dtc-code.b{color:var(--b-color)}.dtc-code.c{color:var(--c-color)}
+  .dtc-badge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;text-transform:uppercase;padding:3px 8px;border-radius:6px;letter-spacing:1px}
+  .dtc-badge.p{background:rgba(245,158,11,0.12);color:var(--p-color)}
+  .dtc-badge.u{background:rgba(248,113,113,0.12);color:var(--u-color)}
+  .dtc-badge.b{background:rgba(167,139,250,0.12);color:var(--b-color)}
+  .dtc-badge.c{background:rgba(52,211,153,0.12);color:var(--c-color)}
+  .sev{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;letter-spacing:.5px}
+  .sev-0{background:rgba(59,130,246,0.12);color:var(--blue)}
+  .sev-1{background:rgba(16,185,129,0.12);color:var(--success)}
+  .sev-2{background:rgba(245,158,11,0.12);color:var(--warn)}
+  .sev-3{background:rgba(239,68,68,0.12);color:var(--error)}
+  .dtc-desc{font-size:15px;color:var(--text);line-height:1.4}
+  .dtc-copy{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);background:none;border:1px solid var(--border);padding:3px 8px;border-radius:4px;cursor:pointer;transition:all .2s;margin-left:auto}
+  .dtc-copy:hover{border-color:var(--accent);color:var(--accent)}
+  .dtc-copy.copied{border-color:var(--success);color:var(--success)}
+
+  /* Expandable detail */
+.dtc-detail{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.dtc-card.open .dtc-detail{max-height:500px}
+  .dtc-detail-inner{padding:0 20px 16px;border-top:1px solid var(--border)}
+  .dtc-causes{margin-top:12px}
+  .dtc-causes-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .dtc-cause{font-size:14px;color:var(--text-dim);padding:4px 0;line-height:1.4}
+  .dtc-cause::before{content:'•';color:var(--accent);margin-right:8px}
+.dtc-related{margin-top:12px}
+.dtc-related-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.dtc-related-code{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .2s;display:inline-block;margin:2px 4px 2px 0}
+.dtc-related-code:hover{border-color:var(--accent);color:var(--accent)}
+.dtc-tooltip{position:fixed;display:none;z-index:1000;background:var(--surface2);border:1px solid var(--border-glow);color:var(--text);font-size:13px;padding:10px 14px;border-radius:8px;max-width:300px;box-shadow:0 4px 12px rgba(0,0,0,0.3);pointer-events:none}
+.dtc-tooltip.visible{display:block}
+.dtc-card.keyboard-focus{outline:2px solid var(--accent);outline-offset:2px}
+.dtc-suggestion{margin-top:12px;text-align:center}
+.dtc-suggestion span{color:var(--accent);cursor:pointer;text-decoration:underline}
+.dtc-tech{margin-top:12px}
+.dtc-tech-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.dtc-tech-note{font-size:13px;color:var(--text-dim);line-height:1.5;font-style:italic}
+  .dtc-expand-hint{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);float:right;margin-top:-16px}
+  .dtc-card.open .dtc-expand-hint{display:none}
+
+  .empty-state{text-align:center;padding:48px 20px;color:var(--text-muted)}
+  .empty-state p{font-size:16px;margin-bottom:8px}
+
+  .footer{text-align:center;padding:32px 16px;color:var(--text-muted);font-size:12px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:32px;line-height:1.8}
+
+  @media(max-width:600px){
+    .app{padding:70px 16px 60px}
+    .header{margin-bottom:24px}
+    .header h1{font-size:clamp(28px,6vw,36px)}
+    .header p{font-size:14px}
+    .search-box{font-size:14px;padding:12px 14px 12px 40px}
+    .fbtn{padding:6px 10px;font-size:11px}
+    .dtc-card-main{padding:14px 16px}
+    .dtc-code{font-size:16px}
+    .dtc-desc{font-size:14px}
+    .dtc-detail-inner{padding:0 16px 14px}
+    .fixed-btns{top:12px;right:12px}
+    .fixed-btn{font-size:11px;padding:8px 10px}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *,.dtc-detail,.recent-drawer{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1><span class="obd">OBD-II</span> DTC Lookup</h1>
+    <p>Search diagnostic trouble codes by code, system, or keyword</p>
+  </div>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-box" id="search" placeholder="Search codes... (e.g. P0420, misfire, O2 sensor)" autocomplete="off" autocorrect="off">
+      <div class="multi-hint" id="multiHint">Multiple codes detected — showing all matches</div>
+    </div>
+    <div class="filter-row">
+      <button class="fbtn on" data-f="all" onclick="filt('all',this)" aria-pressed="true">All</button>
+      <button class="fbtn" data-f="P" onclick="filt('P',this)" aria-pressed="false">P — Powertrain</button>
+      <button class="fbtn" data-f="B" onclick="filt('B',this)" aria-pressed="false">B — Body</button>
+      <button class="fbtn" data-f="C" onclick="filt('C',this)" aria-pressed="false">C — Chassis</button>
+      <button class="fbtn" data-f="U" onclick="filt('U',this)" aria-pressed="false">U — Network</button>
+    </div>
+    <span class="result-count" id="cnt" aria-live="polite"></span>
+  </div>
+
+  <div class="dtc-list" id="dtcList" role="list"></div>
+  <div class="empty-state" id="empty" style="display:none"><p>No codes match</p><span>Try different keywords or clear filters.</span></div>
+</div>
+
+<div class="fixed-btns">
+  <button class="fixed-btn top-btn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ Top</button>
+  <a href="/" class="fixed-btn">VIN</a>
+  <button class="fixed-btn" id="recentBtn" onclick="toggleRecent()">History <span class="hcount" id="recentCount">0</span></button>
+</div>
+
+<div class="recent-overlay" id="recentOverlay" onclick="toggleRecent()"></div>
+<div class="recent-drawer" id="recentDrawer" role="dialog" aria-modal="true" aria-label="Search History">
+  <div class="recent-drawer-header">
+    <span class="drawer-title">History</span>
+    <button class="drawer-close" onclick="toggleRecent()">✕</button>
+  </div>
+  <div class="recent-controls">
+    <input type="text" id="recentSearch" placeholder="Search history..." oninput="renderRecent()">
+    <button class="recent-clear-btn" onclick="clearRecent()">Clear All</button>
+  </div>
+  <div class="recent-list" id="recentList"></div>
+</div>
+
+<div class="dtc-tooltip" id="dtcTooltip"></div>
+<div class="footer">
+  OBD-II DTC Reference — SAE J2012 / ISO 15031-6 standardized generic codes.<br>
+  P0/P2 (Powertrain), B0 (Body), C0 (Chassis), U0 (Network) are universal SAE standard codes.<br>
+  P1/B1/C1/U1 codes are manufacturer-specific — definitions vary by make. Consult your service manual.<br>
+  For reference only.
+</div>
+
+<script>
+// Format: [code, category, system, description, severity, causes, related, techNote]
+// severity: 0=info, 1=monitor, 2=service soon, 3=urgent
+// causes: pipe-separated string, related: pipe-separated codes
+const SEV_LABELS=['Info','Monitor','Service Soon','Urgent'];
+const D=[
+// ===== FUEL & AIR =====
+["P0001","P","Fuel","Fuel Volume Regulator Control Circuit/Open",2,"Faulty fuel pressure regulator|Wiring issue to fuel regulator|ECM failure","P0002|P0003|P0004","The fuel volume regulator controls fuel pump flow rate back to the tank. The PCM sends PWM signals to control regulator position. An open circuit means no return signal is detected — typically a failed regulator, wiring fault, or ECM driver issue."],
+["P0002","P","Fuel","Fuel Volume Regulator Control Circuit Range/Performance",2,"Fuel pressure regulator malfunction|Clogged fuel filter|Wiring issue","P0001|P0003","The PCM monitors fuel pressure at the rail and compares it to expected values. When pressure readings fall outside the programmed range for the given command, the regulator circuit has failed to perform as specified."],
+["P0003","P","Fuel","Fuel Volume Regulator Control Circuit Low",2,"Short in fuel regulator circuit|Faulty regulator|ECM issue","P0001|P0002","The PCM detects low voltage or current in the fuel volume regulator control circuit. This indicates a short to ground, failed regulator internal circuit, or ECM output driver malfunction."],
+["P0004","P","Fuel","Fuel Volume Regulator Control Circuit High",2,"","P0001","The PCM detects excessive voltage or current in the fuel volume regulator circuit, indicating a short to power or failed regulator internal components."],
+["P0005","P","Fuel","Fuel Shutoff Valve A Control Circuit/Open",1,"","","The fuel shutoff valve controls fuel delivery to the engine for shutdown and safety. An open circuit indicates the PCM cannot control the valve — wiring fault, failed valve, or ECM driver issue."],
+["P0006","P","Fuel","Fuel Shutoff Valve A Control Circuit Low",1,"","","The PCM monitors voltage on the fuel shutoff valve control circuit. Low voltage indicates a short to ground, faulty valve, or wiring issue."],
+["P0007","P","Fuel","Fuel Shutoff Valve A Control Circuit High",1,"","","The PCM monitors voltage on the fuel shutoff valve circuit. High voltage indicates a short to power, wiring issue, or faulty valve."],
+["P0008","P","Fuel","Engine Position System Performance (Bank 1)",2,"Timing chain stretched|Timing chain tensioner failure|Cam/crank sensor issue","P0009|P0016","The PCM compares crankshaft and camshaft position signals to verify valve timing. Bank 1 timing error indicates the timing chain has jumped teeth or stretched beyond specification, affecting engine performance and emissions."],
+["P0009","P","Fuel","Engine Position System Performance (Bank 2)",2,"Timing chain stretched|Timing chain tensioner failure|Cam/crank sensor issue","P0008|P0018","The PCM compares crankshaft and camshaft position signals to verify valve timing. Bank 2 timing error indicates the timing chain has jumped teeth or stretched beyond specification on the second bank of cylinders."],
+// ===== VVT =====
+["P0010","P","VVT","Intake Camshaft Position Actuator Circuit/Open (Bank 1)",2,"Faulty VVT solenoid|Oil control valve wiring|Low oil level/pressure","P0011|P0012","The Variable Valve Timing (VVT) system uses oil control solenoids to actuate camshaft phasers. The PCM sends PWM signals to the solenoid to direct oil flow. An open circuit means the solenoid is not responding to PCM commands."],
+["P0011","P","VVT","Intake Camshaft Position Timing Over-Advanced (Bank 1)",2,"Dirty engine oil|Faulty VVT solenoid|Timing chain stretched|Oil control valve stuck","P0010|P0012|P0021","The PCM monitors camshaft position relative to crankshaft position. Over-advanced timing means the intake camshaft is rotating too far ahead of the crank. Oil sludge or worn phasers prevent the timing from holding the commanded position."],
+["P0012","P","VVT","Intake Camshaft Position Timing Over-Retarded (Bank 1)",2,"Dirty engine oil|Faulty VVT solenoid|Timing chain stretched","P0010|P0011","The PCM monitors camshaft position relative to crankshaft position. Over-retarded timing means the intake camshaft is rotating behind the expected position. Worn phasers or low oil pressure prevents proper timing advancement."],
+["P0013","P","VVT","Exhaust Camshaft Position Actuator Circuit/Open (Bank 1)",2,"Faulty VVT solenoid|Wiring issue|Low oil","P0014|P0015","The exhaust camshaft VVT solenoid controls phaser position for exhaust valve timing. The PCM commands the solenoid to direct oil pressure to advance or retard timing. An open circuit indicates no response to PCM commands."],
+["P0014","P","VVT","Exhaust Camshaft Position Timing Over-Advanced (Bank 1)",2,"Dirty oil|VVT solenoid failure|Timing chain issue","P0013|P0015","The exhaust camshaft timing is over-advanced — the phaser has rotated farther than commanded by the PCM. This typically indicates a stuck phaser or failed oil control valve allowing unintended timing advance."],
+["P0015","P","VVT","Exhaust Camshaft Position Timing Over-Retarded (Bank 1)",2,"Dirty oil|VVT solenoid failure|Timing chain issue","P0013|P0014","The exhaust camshaft timing is over-retarded — the phaser has not advanced as far as commanded. Worn phaser internals or low oil pressure prevents the phaser from reaching the commanded position."],
+["P0016","P","VVT","Crankshaft Position - Camshaft Position Correlation (Bank 1 Sensor A)",2,"Timing chain jumped a tooth|Stretched timing chain|Faulty cam/crank sensor|VVT solenoid failure","P0017|P0008","The PCM expects a specific correlation between crankshaft and camshaft position sensors. When the signals don't match expected timing, the timing chain has jumped or the sensors are providing incorrect data."],
+["P0017","P","VVT","Crankshaft Position - Camshaft Position Correlation (Bank 1 Sensor B)",2,"Timing chain jumped|Stretched chain|Faulty sensor","P0016","The second camshaft position sensor on Bank 1 does not correlate with crankshaft position. This indicates timing chain jumped teeth or a faulty sensor on the exhaust cam."],
+["P0018","P","VVT","Crankshaft Position - Camshaft Position Correlation (Bank 2 Sensor A)",2,"Timing chain jumped|Stretched chain|Faulty sensor","P0019|P0009","Bank 2 camshaft position does not correlate with crankshaft position. On V-type engines, each bank has separate timing — this indicates timing chain issues on the second bank."],
+["P0019","P","VVT","Crankshaft Position - Camshaft Position Correlation (Bank 2 Sensor B)",2,"Timing chain jumped|Stretched chain|Faulty sensor","P0018","The second Bank 2 camshaft sensor (typically exhaust) does not correlate with crankshaft position, indicating timing chain jumped or sensor fault."],
+["P0020","P","VVT","Intake Camshaft Position Actuator Circuit/Open (Bank 2)",2,"","P0021","The Bank 2 intake camshaft VVT solenoid is not responding to PCM commands. This affects the second bank of cylinders on V-type engines."],
+["P0021","P","VVT","Intake Camshaft Position Timing Over-Advanced (Bank 2)",2,"Dirty oil|VVT solenoid|Timing chain","P0020|P0011|P0022","Bank 2 intake camshaft timing is over-advanced — phaser has rotated past commanded position. Oil contamination or worn phaser components cause this condition."],
+["P0022","P","VVT","Intake Camshaft Position Timing Over-Retarded (Bank 2)",2,"Dirty oil|VVT solenoid|Timing chain","P0021","Bank 2 intake camshaft timing is over-retarded — phaser has not advanced far enough. Low oil pressure or worn phaser prevents proper timing."],
+["P0023","P","VVT","Exhaust Camshaft Position Actuator Circuit/Open (Bank 2)",2,"","P0024|P0025","Bank 2 exhaust camshaft VVT solenoid is not responding to PCM commands, affecting exhaust valve timing on the second bank."],
+["P0024","P","VVT","Exhaust Camshaft Position Timing Over-Advanced (Bank 2)",2,"","P0023","Bank 2 exhaust camshaft timing is over-advanced — phaser rotated past commanded position due to stuck solenoid or phaser."],
+["P0025","P","VVT","Exhaust Camshaft Position Timing Over-Retarded (Bank 2)",2,"","P0023","Bank 2 exhaust camshaft timing is over-retarded — phaser did not advance sufficiently due to low oil pressure or worn components."],
+// ===== O2 SENSORS =====
+["P0030","P","O2 Sensor","HO2S Heater Control Circuit (Bank 1 Sensor 1)",1,"Failed O2 sensor heater|Blown fuse|Wiring issue","P0031|P0032|P0135","The heated oxygen sensor includes a heating element to reach operating temperature quickly. The PCM monitors heater circuit resistance. When heater current is out of range, the sensor cannot properly measure exhaust oxygen."],
+["P0031","P","O2 Sensor","HO2S Heater Control Circuit Low (Bank 1 Sensor 1)",1,"","P0030","The upstream O2 sensor heater circuit has low current draw — indicating a short to ground, failed heater element, or wiring issue preventing proper sensor warm-up."],
+["P0032","P","O2 Sensor","HO2S Heater Control Circuit High (Bank 1 Sensor 1)",1,"","P0030","The upstream O2 sensor heater circuit has excessive current draw — indicating a short to power, failed heater element, or wiring issue."],
+["P0033","P","Turbo","Turbocharger/Supercharger Bypass Valve A Control Circuit",2,"","","The turbocharger bypass valve recirculates compressed air back to the compressor inlet during throttle lift to prevent compressor surge. The PCM monitors the circuit — open circuit indicates wiring fault or failed valve actuator."],
+["P0034","P","Turbo","Turbocharger/Supercharger Bypass Valve A Control Circuit Low",2,"","","The turbo bypass valve circuit shows low voltage — short to ground or failed valve motor preventing proper boost control."],
+["P0035","P","Turbo","Turbocharger/Supercharger Bypass Valve A Control Circuit High",2,"","","The turbo bypass valve circuit shows excessive voltage — short to power or wiring issue affecting boost regulation."],
+["P0036","P","O2 Sensor","HO2S Heater Control Circuit (Bank 1 Sensor 2)",1,"Failed O2 sensor heater|Blown fuse|Wiring open/short","P0037|P0038|P0141","The downstream (post-catalytic converter) O2 sensor heater circuit monitors the rear sensor's heating element. Proper heater operation is needed for accurate emissions monitoring during closed-loop operation."],
+["P0037","P","O2 Sensor","HO2S Heater Control Circuit Low (Bank 1 Sensor 2)",1,"","P0036","The downstream O2 sensor heater circuit has low current — short to ground, failed heater, or wiring preventing sensor warm-up."],
+["P0038","P","O2 Sensor","HO2S Heater Control Circuit High (Bank 1 Sensor 2)",1,"","P0036","The downstream O2 sensor heater circuit has excessive current draw — short to power or heater element short."],
+["P0050","P","O2 Sensor","HO2S Heater Control Circuit (Bank 2 Sensor 1)",1,"Failed O2 sensor heater|Wiring issue","P0155","Bank 2 upstream O2 sensor heater circuit is malfunctioning. On V engines, Bank 2 is the second bank of cylinders."],
+["P0051","P","O2 Sensor","HO2S Heater Control Circuit Low (Bank 2 Sensor 1)",1,"","P0050","Bank 2 upstream O2 heater circuit has low current — short to ground or failed heater element."],
+["P0052","P","O2 Sensor","HO2S Heater Control Circuit High (Bank 2 Sensor 1)",1,"","P0050","Bank 2 upstream O2 heater circuit has excessive current — short to power or internal heater short."],
+["P0056","P","O2 Sensor","HO2S Heater Control Circuit (Bank 2 Sensor 2)",1,"","P0161","Bank 2 downstream (post-cat) O2 sensor heater circuit is not functioning properly, affecting emissions monitoring accuracy."],
+["P0057","P","O2 Sensor","HO2S Heater Control Circuit Low (Bank 2 Sensor 2)",1,"","P0056","Bank 2 downstream O2 heater circuit shows low current — short to ground or heater failure."],
+["P0058","P","O2 Sensor","HO2S Heater Control Circuit High (Bank 2 Sensor 2)",1,"","P0056","Bank 2 downstream O2 heater circuit shows excessive current — short to power or internal short."],
+// ===== TURBO =====
+["P0045","P","Turbo","Turbocharger/Supercharger Boost Control A Circuit/Open",2,"Faulty wastegate solenoid|Boost control valve wiring|Vacuum leak","P0046|P0299","The turbo boost control system uses a solenoid to control wastegate operation and boost pressure. An open circuit means the PCM cannot control boost — wiring fault or failed solenoid."],
+["P0046","P","Turbo","Turbocharger/Supercharger Boost Control A Circuit Range/Performance",2,"","P0045","The boost pressure sensor signal does not match expected values for the commanded boost. This indicates boost control system malfunction."],
+["P0047","P","Turbo","Turbocharger/Supercharger Boost Control A Circuit Low",2,"","P0045","The boost control solenoid circuit shows low voltage — short to ground or failed solenoid preventing proper boost regulation."],
+["P0048","P","Turbo","Turbocharger/Supercharger Boost Control A Circuit High",2,"","P0045","The boost control solenoid circuit shows excessive voltage — short to power or wiring issue affecting turbo boost."],
+// ===== AIR METERING / MAF =====
+["P0068","P","Fuel","MAP/MAF - Throttle Position Correlation",2,"Dirty throttle body|Vacuum leak|Faulty MAP or MAF sensor|Faulty TPS","P0101|P0121"],
+["P0069","P","Fuel","MAP - Barometric Pressure Correlation",1,"Faulty MAP sensor|Clogged MAP sensor port",""],
+["P0087","P","Fuel","Fuel Rail/System Pressure Too Low",3,"Failing fuel pump|Clogged fuel filter|Leaking fuel injector|Fuel pressure regulator failure","P0088|P0190"],
+["P0088","P","Fuel","Fuel Rail/System Pressure Too High",3,"Faulty fuel pressure regulator|Kinked return line|Faulty fuel pump driver","P0087"],
+["P0089","P","Fuel","Fuel Pressure Regulator 1 Performance",2,"Faulty regulator|Clogged filter|Weak fuel pump","P0087","The fuel pressure regulator maintains consistent fuel pressure at the injectors. The PCM monitors rail pressure and compares to expected values — performance code indicates pressure is outside specifications."],
+// ===== MISFIRES =====
+["P0100","P","MAF","Mass or Volume Air Flow A Circuit",2,"Faulty MAF sensor|Dirty MAF sensor|Intake air leak|Wiring issue","P0101|P0102|P0103","The Mass Air Flow sensor measures the amount of air entering the engine. The PCM uses this signal to calculate fuel injection duration. Circuit fault means the sensor signal is invalid or absent."],
+["P0101","P","MAF","Mass or Volume Air Flow A Circuit Range/Performance",2,"Dirty MAF sensor|Vacuum leak|Clogged air filter|Intake leak after MAF","P0100|P0171|P0174","The MAF sensor signal is outside expected range for the operating conditions. This affects fuel calculation accuracy and may cause lean/rich conditions."],
+["P0102","P","MAF","Mass or Volume Air Flow A Circuit Low Input",2,"Dirty MAF|Wiring short|Air leak after MAF","P0100|P0101","The MAF sensor reports abnormally low air flow. This could indicate a dirty sensor, wiring short to ground, or air leak between MAF and throttle."],
+["P0103","P","MAF","Mass or Volume Air Flow A Circuit High Input",2,"Dirty MAF|Wiring issue|Restricted air filter","P0100|P0101","The MAF sensor reports abnormally high air flow. Common causes include contaminated sensor elements, wiring issues, or severely restricted air filter upstream."],
+["P0105","P","MAP","MAP/BARO Circuit",2,"Faulty MAP sensor|Vacuum hose disconnected|Wiring issue","P0106|P0107|P0108","The Manifold Absolute Pressure sensor measures intake manifold vacuum. The PCM uses this for fuel calculation, especially on older engines without MAF. Circuit fault indicates invalid sensor signal."],
+["P0106","P","MAP","MAP/BARO Circuit Range/Performance",2,"Vacuum leak|Faulty MAP sensor|Clogged MAP port","P0105","The MAP sensor signal is outside expected range. This affects fuel delivery calculation and may cause driveability issues."],
+["P0107","P","MAP","MAP/BARO Circuit Low Input",2,"Faulty MAP sensor|Wiring short|Vacuum leak","P0105","The MAP sensor reports lower than expected vacuum — could indicate vacuum leak, faulty sensor, or wiring issue."],
+["P0108","P","MAP","MAP/BARO Circuit High Input",2,"Faulty MAP sensor|Open circuit|Reference voltage issue","P0105","The MAP sensor reports higher than expected pressure (lower vacuum). This could indicate a faulty sensor, disconnected vacuum hose, or wiring problem."],
+["P0110","P","IAT","Intake Air Temperature Sensor 1 Circuit",1,"Faulty IAT sensor|Wiring issue|Dirty connector","P0111|P0112|P0113","The Intake Air Temperature sensor measures incoming air temperature. The PCM uses this for fuel calculation and engine protection. Circuit fault indicates sensor malfunction."],
+["P0111","P","IAT","Intake Air Temperature Sensor 1 Circuit Range/Performance",1,"","P0110","The IAT sensor reading is outside expected range for ambient conditions. This affects cold-start enrichment and fuel delivery accuracy."],
+["P0112","P","IAT","Intake Air Temperature Sensor 1 Circuit Low",1,"Shorted IAT sensor|Wiring short to ground","P0110","The IAT sensor reports artificially low temperature — typically a short circuit to ground in wiring or sensor."],
+["P0113","P","IAT","Intake Air Temperature Sensor 1 Circuit High",1,"Open IAT circuit|Disconnected sensor|Corroded connector","P0110","The IAT sensor reports open circuit or infinite temperature — wiring open, disconnected sensor, or connector corrosion."],
+["P0115","P","ECT","Engine Coolant Temperature Sensor 1 Circuit",2,"Faulty ECT sensor|Wiring issue|Corroded connector","P0116|P0117|P0118","The Engine Coolant Temperature sensor monitors engine temperature for fuel enrichment, cooling fan control, and emissions strategy. Circuit fault indicates malfunction."],
+["P0116","P","ECT","Engine Coolant Temperature Sensor 1 Circuit Range/Performance",2,"Stuck thermostat|Faulty ECT sensor|Air in cooling system","P0115|P0125|P0128","The ECT sensor reading doesn't match expected values for the operating conditions. May indicate stuck thermostat causing temperature to run too cold or hot."],
+["P0117","P","ECT","Engine Coolant Temperature Sensor 1 Circuit Low",2,"Shorted ECT sensor|Wiring short","P0115","The ECT sensor reports unusually low temperature — short circuit to ground in wiring, or sensor internally shorted."],
+["P0118","P","ECT","Engine Coolant Temperature Sensor 1 Circuit High",2,"Open ECT circuit|Disconnected sensor","P0115","The ECT sensor reports open circuit — wiring open, disconnected connector, or sensor internal failure."],
+["P0120","P","TPS","Throttle Position Sensor A Circuit",2,"Faulty TPS|Wiring issue|Dirty throttle body","P0121|P0122|P0123","The Throttle Position Sensor monitors throttle plate angle. The PCM uses this for fuel delivery, transmission shift points, and throttle response. Circuit fault indicates invalid signal."],
+["P0121","P","TPS","Throttle Position Sensor A Circuit Range/Performance",2,"Dirty throttle body|Faulty TPS|Wiring intermittent","P0120|P0068","The TPS signal is outside expected range for throttle position. This affects accelerator response and may cause idle issues."],
+["P0122","P","TPS","Throttle Position Sensor A Circuit Low",2,"Faulty TPS|Wiring short to ground","P0120","The TPS reports abnormally low voltage — short to ground in wiring, or sensor internal failure. This may cause no-throttle condition."],
+["P0123","P","TPS","Throttle Position Sensor A Circuit High",2,"Faulty TPS|Open reference circuit","P0120","The TPS reports abnormally high voltage — open reference wire, or sensor internal short to reference voltage."],
+["P0125","P","ECT","Insufficient Coolant Temperature for Closed Loop Fuel Control",1,"Stuck thermostat (open)|Low coolant level|Faulty ECT sensor","P0116|P0128","The engine has not reached operating temperature within expected time. The PCM cannot enter closed-loop fuel control, affecting emissions and fuel economy."],
+["P0128","P","ECT","Coolant Thermostat Below Regulating Temperature",1,"Stuck thermostat (open)|Faulty ECT sensor|Low coolant","P0125|P0116","The thermostat is not reaching regulating temperature. A stuck-open thermostat causes slow warm-up and running rich during warm-up."],
+["P0130","P","O2 Sensor","O2 Sensor Circuit (Bank 1 Sensor 1)",2,"Faulty O2 sensor|Exhaust leak|Wiring issue","P0131|P0132|P0133|P0134|P0135","The upstream (before catalytic converter) oxygen sensor monitors exhaust oxygen content for fuel calculation. Circuit fault indicates invalid sensor signal."],
+["P0131","P","O2 Sensor","O2 Sensor Circuit Low Voltage (Bank 1 Sensor 1)",2,"Vacuum leak|Faulty O2 sensor|Exhaust leak before sensor","P0130|P0171","The upstream O2 sensor stuck at low voltage (lean indication). This could indicate vacuum leak, exhaust leak before sensor, or failing sensor."],
+["P0132","P","O2 Sensor","O2 Sensor Circuit High Voltage (Bank 1 Sensor 1)",2,"Short in O2 wiring|Fuel pressure too high|Faulty sensor","P0130|P0172","The upstream O2 sensor stuck at high voltage (rich indication). This could indicate fuel pressure too high, leaking injector, or sensor short."],
+["P0133","P","O2 Sensor","O2 Sensor Circuit Slow Response (Bank 1 Sensor 1)",2,"Aging O2 sensor|Exhaust leak|Fuel delivery issue","P0130|P0171|P0172","The upstream O2 sensor is taking too long to switch between lean and rich. Aging sensor or contaminated sensor element reduces response time."],
+["P0134","P","O2 Sensor","O2 Sensor Circuit No Activity Detected (Bank 1 Sensor 1)",2,"Failed O2 sensor|Wiring open|O2 heater circuit failure","P0130|P0135","The upstream O2 sensor is not switching at all — indicating failed sensor, open heater circuit, or wiring issue."],
+["P0135","P","O2 Sensor","O2 Sensor Heater Circuit (Bank 1 Sensor 1)",1,"Failed O2 sensor heater|Blown fuse|Wiring issue","P0030|P0134","The upstream O2 sensor heater element is not functioning. Without heater, the sensor takes longer to reach operating temperature, affecting closed-loop operation."],
+["P0136","P","O2 Sensor","O2 Sensor Circuit (Bank 1 Sensor 2)",1,"Faulty rear O2 sensor|Exhaust leak|Wiring","P0137|P0138|P0139|P0140|P0141"],
+["P0137","P","O2 Sensor","O2 Sensor Circuit Low Voltage (Bank 1 Sensor 2)",1,"Faulty rear O2 sensor|Exhaust leak","P0136"],
+["P0138","P","O2 Sensor","O2 Sensor Circuit High Voltage (Bank 1 Sensor 2)",1,"Faulty rear O2 sensor|Short in wiring","P0136"],
+["P0139","P","O2 Sensor","O2 Sensor Circuit Slow Response (Bank 1 Sensor 2)",1,"Aging O2 sensor|Contaminated sensor","P0136"],
+["P0140","P","O2 Sensor","O2 Sensor Circuit No Activity Detected (Bank 1 Sensor 2)",1,"Failed O2 sensor|Open circuit","P0136"],
+["P0141","P","O2 Sensor","O2 Sensor Heater Circuit (Bank 1 Sensor 2)",1,"O2 heater failure|Blown fuse|Wiring","P0036|P0136"],
+["P0150","P","O2 Sensor","O2 Sensor Circuit (Bank 2 Sensor 1)",2,"Faulty O2 sensor|Exhaust leak|Wiring","P0155"],
+["P0151","P","O2 Sensor","O2 Sensor Circuit Low Voltage (Bank 2 Sensor 1)",2,"","P0150|P0174"],
+["P0152","P","O2 Sensor","O2 Sensor Circuit High Voltage (Bank 2 Sensor 1)",2,"","P0150|P0175","Bank 2 upstream O2 sensor is stuck at high voltage, indicating rich condition. Could be leaking injector, high fuel pressure, or sensor short on Bank 2."],
+["P0153","P","O2 Sensor","O2 Sensor Circuit Slow Response (Bank 2 Sensor 1)",2,"","P0150","Bank 2 upstream O2 sensor response time is slow. This indicates aging sensor or contamination affecting sensor switching speed."],
+["P0154","P","O2 Sensor","O2 Sensor Circuit No Activity Detected (Bank 2 Sensor 1)",2,"","P0150|P0155","Bank 2 upstream O2 sensor is not switching between lean and rich — sensor has failed or heater circuit is malfunctioning."],
+["P0155","P","O2 Sensor","O2 Sensor Heater Circuit (Bank 2 Sensor 1)",1,"Failed heater|Fuse|Wiring","P0050|P0154","Bank 2 upstream O2 sensor heater circuit is not functioning. Without proper heating, the sensor takes longer to reach operating temperature."],
+["P0156","P","O2 Sensor","O2 Sensor Circuit (Bank 2 Sensor 2)",1,"","P0161","Bank 2 downstream (post-cat) O2 sensor circuit fault. This sensor monitors catalytic converter efficiency."],
+["P0157","P","O2 Sensor","O2 Sensor Circuit Low Voltage (Bank 2 Sensor 2)",1,"","P0156","Bank 2 downstream O2 sensor stuck at low voltage. Could indicate exhaust leak before sensor or sensor contamination."],
+["P0158","P","O2 Sensor","O2 Sensor Circuit High Voltage (Bank 2 Sensor 2)",1,"","P0156","Bank 2 downstream O2 sensor stuck at high voltage, indicating rich condition in exhaust after the converter."],
+["P0159","P","O2 Sensor","O2 Sensor Circuit Slow Response (Bank 2 Sensor 2)",1,"","P0156","Bank 2 downstream O2 sensor is slow to respond, indicating aging sensor or contamination."],
+["P0160","P","O2 Sensor","O2 Sensor Circuit No Activity Detected (Bank 2 Sensor 2)",1,"","P0156","Bank 2 downstream O2 sensor is not detecting any activity — sensor has failed electrically."],
+["P0161","P","O2 Sensor","O2 Sensor Heater Circuit (Bank 2 Sensor 2)",1,"","P0056","Bank 2 downstream O2 sensor heater circuit malfunction — affects converter efficiency monitoring accuracy."],
+["P0170","P","Fuel Trim","Fuel Trim (Bank 1)",2,"Vacuum leak|Dirty MAF|Fuel pressure issue|O2 sensor","P0171|P0172","The PCM monitors long-term fuel trim adjustments for Bank 1. This code indicates trim values have exceeded normal adjustment range."],
+["P0171","P","Fuel Trim","System Too Lean (Bank 1)",2,"Vacuum leak|Dirty or faulty MAF sensor|Weak fuel pump|Clogged fuel injectors|Intake gasket leak|Exhaust leak before O2 sensor","P0174|P0130|P0101","The PCM uses upstream O2 sensor feedback to adjust fuel delivery. When long-term trim becomes excessively positive (adding fuel), the system is compensating for a lean condition — typically vacuum leaks, dirty MAF, or fuel delivery issues."],
+["P0172","P","Fuel Trim","System Too Rich (Bank 1)",2,"Leaking fuel injector|Faulty O2 sensor|High fuel pressure|Dirty air filter|Faulty EVAP purge valve|Saturated charcoal canister","P0175|P0132","The PCM detects excessive fuel enrichment. Long-term trim has gone negative (reducing fuel). Common causes include leaking injectors, high fuel pressure, or faulty EVAP purge valve."],
+["P0173","P","Fuel Trim","Fuel Trim (Bank 2)",2,"","P0174|P0175","Bank 2 long-term fuel trim is outside normal range. Indicates lean or rich condition on the second bank of cylinders."],
+["P0174","P","Fuel Trim","System Too Lean (Bank 2)",2,"Vacuum leak|Dirty MAF|Weak fuel pump|Clogged injectors|Intake gasket leak","P0171|P0150|P0101","Bank 2 is running lean — PCM has added fuel via long-term trim to compensate. Same causes as Bank 1 lean: vacuum leaks, MAF issues, fuel delivery."],
+["P0175","P","Fuel Trim","System Too Rich (Bank 2)",2,"Leaking injector|Faulty O2 sensor|High fuel pressure|Dirty air filter|Faulty purge valve","P0172|P0152","Bank 2 is running rich — PCM has reduced fuel via long-term trim. Leaking injectors or high fuel pressure common causes."],
+["P0176","P","Fuel","Fuel Composition Sensor Circuit",1,"","","The fuel composition sensor determines ethanol content in flex-fuel vehicles. Circuit fault indicates sensor malfunction affecting fuel delivery calibration."],
+["P0180","P","Fuel","Fuel Temperature Sensor A Circuit",1,"","","The fuel temperature sensor monitors fuel temperature for density compensation. Accurate fuel temperature is needed for proper injector pulse width calculation."],
+["P0190","P","Fuel","Fuel Rail Pressure Sensor Circuit",2,"Faulty FRP sensor|Wiring|Low fuel pressure","P0087|P0191","The Fuel Rail Pressure sensor measures fuel pressure at the injectors. The PCM uses this for direct injection engines to control fuel delivery precisely."],
+["P0191","P","Fuel","Fuel Rail Pressure Sensor Circuit Range/Performance",2,"","P0190","The fuel rail pressure sensor reading is outside expected range, affecting fuel delivery accuracy on direct injection engines."],
+["P0192","P","Fuel","Fuel Rail Pressure Sensor Circuit Low Input",2,"","P0190","The fuel rail pressure sensor reports abnormally low pressure — could indicate low fuel pump output, leaking injector, or sensor fault."],
+["P0193","P","Fuel","Fuel Rail Pressure Sensor Circuit High Input",2,"","P0190","The fuel rail pressure sensor reports abnormally high pressure — could indicate faulty pressure regulator or sensor short."],
+["P0200","P","Injector","Injector Circuit/Open",2,"Faulty injector|Wiring open|ECM driver failure","P0201","The fuel injector circuit for one or more cylinders is not responding. The PCM monitors injector driver circuits for proper operation."],
+["P0201","P","Injector","Injector Circuit/Open - Cylinder 1",2,"Faulty injector #1|Wiring|ECM","P0301","Cylinder 1 injector circuit is open — injector not firing. Could be failed injector, wiring issue, or PCM driver fault."],
+["P0202","P","Injector","Injector Circuit/Open - Cylinder 2",2,"Faulty injector #2|Wiring|ECM","P0302","Cylinder 2 injector circuit is open — injector not firing. Common causes include failed injector or wiring issue."],
+["P0203","P","Injector","Injector Circuit/Open - Cylinder 3",2,"Faulty injector #3|Wiring|ECM","P0303","Cylinder 3 injector circuit is open — injector not firing. Check injector resistance and wiring connector."],
+["P0204","P","Injector","Injector Circuit/Open - Cylinder 4",2,"Faulty injector #4|Wiring|ECM","P0304","Cylinder 4 injector circuit is open — injector not firing. May cause misfire if not addressed."],
+["P0205","P","Injector","Injector Circuit/Open - Cylinder 5",2,"","P0305","Cylinder 5 injector circuit is open. Check injector, wiring, and ECM driver for that cylinder."],
+["P0206","P","Injector","Injector Circuit/Open - Cylinder 6",2,"","P0306","Cylinder 6 injector circuit is open — injector not firing. Check injector resistance, wiring connector, and ECM driver for that cylinder."],
+["P0207","P","Injector","Injector Circuit/Open - Cylinder 7",2,"","P0307","Cylinder 7 injector circuit is open on V8 or V10 engines. Check injector and wiring."],
+["P0208","P","Injector","Injector Circuit/Open - Cylinder 8",2,"","P0308","Cylinder 8 injector circuit is open. On V8 engines, this is typically the last cylinder in the bank."],
+["P0261","P","Injector","Injector Circuit Low - Cylinder 1",2,"Faulty injector #1|Wiring short to ground|ECM driver issue","P0201","Cylinder 1 injector circuit voltage is below expected — short to ground in wiring or injector internal short."],
+["P0262","P","Injector","Injector Circuit High - Cylinder 1",2,"","P0201","Cylinder 1 injector circuit voltage is above expected — short to power or open ground circuit."],
+["P0263","P","Injector","Injector Circuit Range/Performance - Cylinder 1",2,"","P0201|P0261"],
+["P0264","P","Injector","Injector Circuit Low - Cylinder 2",2,"","P0202","Cylinder 2 injector circuit voltage is below expected."],
+["P0265","P","Injector","Injector Circuit High - Cylinder 2",2,"","P0202","Cylinder 2 injector circuit voltage is above expected."],
+["P0266","P","Injector","Injector Circuit Range/Performance - Cylinder 2",2,"","P0202|P0264"],
+["P0267","P","Injector","Injector Circuit Low - Cylinder 3",2,"","P0203","Cylinder 3 injector circuit voltage is below expected."],
+["P0268","P","Injector","Injector Circuit High - Cylinder 3",2,"","P0203","Cylinder 3 injector circuit voltage is above expected."],
+["P0269","P","Injector","Injector Circuit Range/Performance - Cylinder 3",2,"","P0203|P0267"],
+["P0270","P","Injector","Injector Circuit Low - Cylinder 4",2,"","P0204","Cylinder 4 injector circuit voltage is below expected."],
+["P0271","P","Injector","Injector Circuit High - Cylinder 4",2,"","P0204","Cylinder 4 injector circuit voltage is above expected."],
+["P0272","P","Injector","Injector Circuit Range/Performance - Cylinder 4",2,"","P0204|P0270"],
+["P0273","P","Injector","Injector Circuit Low - Cylinder 5",2,"","P0205","Cylinder 5 injector circuit voltage is below expected."],
+["P0274","P","Injector","Injector Circuit High - Cylinder 5",2,"","P0205","Cylinder 5 injector circuit voltage is above expected."],
+["P0275","P","Injector","Injector Circuit Range/Performance - Cylinder 5",2,"","P0205|P0273"],
+["P0276","P","Injector","Injector Circuit Low - Cylinder 6",2,"","P0206","Cylinder 6 injector circuit voltage is below expected."],
+["P0277","P","Injector","Injector Circuit High - Cylinder 6",2,"","P0206","Cylinder 6 injector circuit voltage is above expected."],
+["P0278","P","Injector","Injector Circuit Range/Performance - Cylinder 6",2,"","P0206|P0276"],
+["P0279","P","Injector","Injector Circuit Low - Cylinder 7",2,"","P0207","Cylinder 7 injector circuit voltage is below expected."],
+["P0280","P","Injector","Injector Circuit High - Cylinder 7",2,"","P0207","Cylinder 7 injector circuit voltage is above expected."],
+["P0281","P","Injector","Injector Circuit Range/Performance - Cylinder 7",2,"","P0207|P0279"],
+["P0282","P","Injector","Injector Circuit Low - Cylinder 8",2,"","P0208","Cylinder 8 injector circuit voltage is below expected."],
+["P0283","P","Injector","Injector Circuit High - Cylinder 8",2,"","P0208","Cylinder 8 injector circuit voltage is above expected."],
+["P0284","P","Injector","Injector Circuit Range/Performance - Cylinder 8",2,"","P0208|P0282"],
+["P0218","P","Transmission","Transmission Over Temperature",3,"Low transmission fluid|Clogged trans cooler|Heavy towing|Internal trans failure","P0710|P0711","The transmission fluid temperature sensor has exceeded safe operating limits. Prolonged overheating can damage internal transmission components."],
+["P0219","P","Engine","Engine Overspeed Condition",2,"Transmission slip|Downshift at high speed|Sensor error","","The engine has exceeded the manufacturer-defined RPM limit. This typically occurs during transmission slip or improper downshifting."],
+["P0220","P","TPS","Throttle Position Sensor B Circuit",2,"Faulty TPS|Wiring|Dirty throttle body","P0221|P0120","The secondary throttle position sensor (TPS B) circuit is faulty. Modern engines use dual sensors for redundancy."],
+["P0221","P","TPS","Throttle Position Sensor B Range/Performance",2,"","P0220|P0121","TPS B signal is outside expected range. The two TPS sensors should track similarly — if not, throttle body issues may exist."],
+["P0222","P","TPS","Throttle Position Sensor B Circuit Low",2,"","P0220","TPS B reports abnormally low voltage — short to ground, faulty sensor, or wiring issue."],
+["P0223","P","TPS","Throttle Position Sensor B Circuit High",2,"","P0220","TPS B reports abnormally high voltage — short to reference voltage, faulty sensor, or wiring issue."],
+["P0230","P","Fuel","Fuel Pump Primary Circuit",3,"Faulty fuel pump relay|Wiring issue|Fuel pump failure","P0231|P0087","The PCM controls the fuel pump via the primary (control) circuit. This circuit includes the fuel pump relay and driver. Fault indicates the PCM cannot control the pump."],
+["P0231","P","Fuel","Fuel Pump Secondary Circuit Low",3,"Weak fuel pump|Wiring|Relay issue","P0230","The fuel pump is drawing less current than expected. Could indicate weak pump, high resistance in wiring, or poor connections."],
+["P0232","P","Fuel","Fuel Pump Secondary Circuit High",2,"","P0230","The fuel pump is drawing more current than expected. Could indicate pump mechanical binding or short in the pump motor."],
+["P0234","P","Turbo","Turbocharger/Supercharger A Overboost Condition",3,"Stuck wastegate|Faulty boost control solenoid|Boost leak|Faulty boost pressure sensor","P0299|P0045","The turbo boost pressure exceeded the maximum allowed value. The PCM monitors boost via the MAP sensor. Overboost can damage the engine or turbo — typically caused by stuck wastegate or faulty boost control solenoid."],
+["P0243","P","Turbo","Turbocharger/Supercharger Wastegate Solenoid A",2,"Faulty wastegate solenoid|Wiring|Stuck wastegate","P0234|P0244","The wastegate solenoid controls turbo boost by regulating wastegate valve position. Fault indicates the PCM cannot control boost properly."],
+["P0244","P","Turbo","Turbocharger/Supercharger Wastegate Solenoid A Range/Performance",2,"","P0243","The wastegate solenoid signal is outside expected range. This affects boost regulation and may cause overboost or underboost."],
+["P0299","P","Turbo","Turbocharger/Supercharger A Underboost Condition",2,"Boost leak|Worn turbo|Stuck wastegate open|Clogged intercooler|Faulty boost solenoid","P0234|P0045","The turbo is not producing expected boost pressure. Underboost reduces power and may cause driveability issues. Common causes include boost leaks, wastegate stuck open, or turbo wear."],
+["P0300","P","Misfire","Random/Multiple Cylinder Misfire Detected",3,"Worn spark plugs|Ignition coil failure|Vacuum leak|Low fuel pressure|Intake gasket leak|Low compression","P0301|P0302|P0303|P0304|P0171","The ECM monitors each cylinder's combustion via the crankshaft position sensor. Random misfire means multiple cylinders are misfiring non-uniformly. Common causes include lean fuel mixture, weak spark, vacuum leaks, or low compression across multiple cylinders."],
+["P0301","P","Misfire","Cylinder 1 Misfire Detected",2,"Bad spark plug #1|Faulty coil pack #1|Faulty injector #1|Low compression #1|Vacuum leak near cylinder 1","P0300|P0201","Cylinder 1 is misfiring. The ECM detects this via abnormal crankshaft vibration. Causes include bad spark plug, failed ignition coil, faulty injector, or low compression in that cylinder."],
+["P0302","P","Misfire","Cylinder 2 Misfire Detected",2,"Bad spark plug #2|Faulty coil pack #2|Faulty injector #2|Low compression #2","P0300|P0202","Cylinder 2 is misfiring. Check spark plug, ignition coil, fuel injector, and compression for that cylinder."],
+["P0303","P","Misfire","Cylinder 3 Misfire Detected",2,"Bad spark plug #3|Faulty coil pack #3|Faulty injector #3|Low compression #3","P0300|P0203","Cylinder 3 is misfiring. Common causes include failed coil, bad spark plug, or faulty fuel injector."],
+["P0304","P","Misfire","Cylinder 4 Misfire Detected",2,"Bad spark plug #4|Faulty coil pack #4|Faulty injector #4|Low compression #4","P0300|P0204","Cylinder 4 is misfiring. Check the ignition coil, spark plug, injector, and compression for cylinder 4."],
+["P0305","P","Misfire","Cylinder 5 Misfire Detected",2,"Bad spark plug #5|Faulty coil pack #5|Low compression #5","P0300|P0205","Cylinder 5 misfire detected. Applies to any engine with 5 or more cylinders (inline-5, V6, V8, etc.). Check spark plug, coil, injector, and compression for that cylinder."],
+["P0306","P","Misfire","Cylinder 6 Misfire Detected",2,"Bad spark plug #6|Faulty coil pack #6|Low compression #6","P0300|P0206","Cylinder 6 misfire detected. Applies to any engine with 6 or more cylinders. Cylinder numbering and bank assignment vary by manufacturer — consult the service manual for your specific engine."],
+["P0307","P","Misfire","Cylinder 7 Misfire Detected",2,"","P0300","Cylinder 7 misfire detected on V8 or V10 engines. Check that cylinder's spark plug, coil, and injector."],
+["P0308","P","Misfire","Cylinder 8 Misfire Detected",2,"","P0300","Cylinder 8 misfire detected on V8 engines. Typically the last cylinder in the second bank."],
+["P0309","P","Misfire","Cylinder 9 Misfire Detected",2,"","P0300","Cylinder 9 misfire detected on V10 or V12 engines. Check that cylinder's spark plug, coil, and injector."],
+["P0310","P","Misfire","Cylinder 10 Misfire Detected",2,"","P0300","Cylinder 10 misfire detected on V10 or V12 engines."],
+["P0311","P","Misfire","Cylinder 11 Misfire Detected",2,"","P0300","Cylinder 11 misfire detected."],
+["P0312","P","Misfire","Cylinder 12 Misfire Detected",2,"","P0300","Cylinder 12 misfire detected on V12 engines."],
+["P0313","P","Misfire","Cylinder 13 Misfire Detected",2,"","P0300"],
+["P0314","P","Misfire","Cylinder 14 Misfire Detected",2,"","P0300"],
+["P0315","P","Misfire","Cylinder 15 Misfire Detected",2,"","P0300"],
+["P0316","P","Misfire","Cylinder 16 Misfire Detected",2,"","P0300"],
+["P0325","P","Knock","Knock Sensor 1 Circuit (Bank 1)",2,"Faulty knock sensor|Wiring issue|Loose sensor|Engine mechanical noise","P0326|P0327|P0328|P0330|P0332","The knock sensor detects engine vibrations from abnormal combustion (knocking/pinging). The PCM uses this to adjust timing and prevent engine damage. Circuit fault indicates no signal from the sensor."],
+["P0326","P","Knock","Knock Sensor 1 Circuit Range/Performance (Bank 1)",2,"","P0325","The knock sensor signal is abnormal — either too high or too low for the current operating conditions. May indicate faulty sensor or mechanical noise."],
+["P0327","P","Knock","Knock Sensor 1 Circuit Low (Bank 1)",2,"Faulty knock sensor|Loose connector|Wiring short","P0325","The knock sensor circuit shows low voltage — typically a short to ground or failed sensor internal circuit."],
+["P0328","P","Knock","Knock Sensor 1 Circuit High (Bank 1)",2,"","P0325","The knock sensor circuit shows high voltage — could indicate short to reference voltage or sensor internal short."],
+["P0330","P","Knock","Knock Sensor 2 Circuit (Bank 2)",2,"","P0325|P0331|P0332","The second knock sensor (Bank 2) circuit is faulty. On V engines, Bank 2 has a separate knock sensor."],
+["P0332","P","Knock","Knock Sensor 2 Circuit Low (Bank 2)",2,"","P0330|P0327","Bank 2 knock sensor circuit shows low voltage — short to ground or faulty sensor."],
+["P0333","P","Crank/Cam","Crankshaft Position Sensor B Circuit",2,"","P0335","The secondary crankshaft position sensor (CKP B) circuit is faulty. Some engines use dual crank sensors for redundancy."],
+["P0334","P","Crank/Cam","Crankshaft Position Sensor B Circuit Range/Performance",2,"","P0333","The CKP B sensor signal is abnormal."],
+["P0335","P","Crank/Cam","Crankshaft Position Sensor A Circuit",3,"Faulty crank sensor|Wiring issue|Damaged reluctor ring|Timing chain jumped","P0336|P0016","The crankshaft position sensor provides critical timing signals to the PCM for fuel injection and ignition. Without this signal, the engine cannot run. Fault indicates no signal or invalid signal from the sensor."],
+["P0336","P","Crank/Cam","Crankshaft Position Sensor A Circuit Range/Performance",2,"Damaged reluctor ring|Loose sensor|Wiring intermittent","P0335","The crankshaft position sensor signal is present but abnormal — the reluctor ring may be damaged or the sensor loose, causing intermittent signal dropouts."],
+["P0340","P","Crank/Cam","Camshaft Position Sensor A Circuit (Bank 1)",3,"Faulty cam sensor|Wiring issue|Timing chain stretched|Jumped timing","P0341|P0016|P0335","The camshaft position sensor detects camshaft rotation for valve timing and cylinder identification. Fault indicates no signal from the intake camshaft sensor on Bank 1."],
+["P0341","P","Crank/Cam","Camshaft Position Sensor A Circuit Range/Performance (Bank 1)",2,"","P0340","The Bank 1 camshaft position sensor signal is abnormal — could indicate timing chain issues or sensor problems."],
+["P0345","P","Crank/Cam","Camshaft Position Sensor A Circuit (Bank 2)",3,"Faulty cam sensor|Wiring|Timing issue","P0340","The Bank 2 camshaft position sensor is not providing a signal. On V engines, this is the intake camshaft sensor for the second bank."],
+["P0400","P","EGR","Exhaust Gas Recirculation Flow",2,"Clogged EGR valve|Carbon buildup in EGR passages|Faulty EGR valve|Vacuum hose issue","P0401|P0402","The EGR system recirculates exhaust gases to reduce combustion temperature and NOx emissions. The PCM monitors EGR flow via the DPFE sensor. This code indicates general EGR flow malfunction."],
+["P0401","P","EGR","Exhaust Gas Recirculation Flow Insufficient Detected",2,"Clogged EGR passages|Faulty EGR valve|Carbon buildup|Faulty DPFE sensor","P0400|P0402","The EGR flow is lower than commanded. Carbon buildup in EGR passages or a failing EGR valve prevents proper exhaust gas recirculation."],
+["P0402","P","EGR","Exhaust Gas Recirculation Flow Excessive Detected",2,"EGR valve stuck open|Faulty EGR vacuum solenoid","P0400|P0401","The EGR flow is higher than commanded. A stuck-open EGR valve causes excessive exhaust gas dilution, leading to rough idle and stalling."],
+["P0403","P","EGR","Exhaust Gas Recirculation Control A Circuit",2,"Faulty EGR solenoid|Wiring|Vacuum leak","P0400","The EGR control solenoid circuit is not functioning."],
+["P0404","P","EGR","Exhaust Gas Recirculation Control A Circuit Range/Performance",2,"","P0403"],
+["P0405","P","EGR","Exhaust Gas Recirculation Sensor A Circuit Low",2,"Faulty DPFE sensor|Vacuum hose leak|Wiring","P0400","The EGR pressure feedback sensor circuit shows low voltage."],
+["P0406","P","EGR","Exhaust Gas Recirculation Sensor A Circuit High",2,"","P0405","The EGR pressure feedback sensor circuit shows high voltage."],
+["P0407","P","EGR","Exhaust Gas Recirculation Sensor B Circuit Low",2,"","","The second EGR pressure sensor circuit shows low voltage."],
+["P0408","P","EGR","Exhaust Gas Recirculation Sensor B Circuit High",2,"","","The second EGR pressure sensor circuit shows high voltage."],
+["P0410","P","AIR","Secondary Air Injection System",1,"Faulty air pump|Check valve stuck|Hose disconnected|Relay failure","P0411|P0412","The secondary air injection system pumps fresh air into the exhaust to speed catalyst warm-up and reduce cold-start emissions. Fault indicates the system cannot inject air properly."],
+["P0411","P","AIR","Secondary Air Injection System Incorrect Flow Detected",1,"","P0410","The secondary air system is not flowing the expected amount of air. Check valve may be stuck or air pump output reduced."],
+["P0412","P","AIR","Secondary Air Injection System Switching Valve A Circuit",1,"","P0410","The air injection switching valve (which directs air to exhaust) circuit is faulty. The PCM cannot control where air is injected."],
+["P0413","P","AIR","Secondary Air Injection System Switching Valve A Stuck Open",1,"","P0410"],
+["P0414","P","AIR","Secondary Air Injection System Switching Valve A Stuck Closed",1,"","P0410"],
+["P0418","P","AIR","Secondary Air Injection System Pump Relay A Circuit",1,"","P0410"],
+["P0420","P","Catalyst","Catalyst System Efficiency Below Threshold (Bank 1)",2,"Worn catalytic converter|Failing rear O2 sensor|Exhaust leak|Engine misfire damaging cat|Oil burning|Coolant leak into combustion","P0430|P0136|P0141","The PCM compares upstream and downstream O2 sensor voltages. After the catalytic converter, oxygen should be nearly zero (converter consuming remaining O2). If downstream sensor voltage stays too high/close to upstream, emissions aren't being cleaned — converter efficiency has dropped below EPA threshold."],
+["P0421","P","Catalyst","Warm Up Catalyst Efficiency Below Threshold (Bank 1)",2,"","P0420","The warm-up catalyst (the first converter) is not achieving expected efficiency during the warm-up phase. This typically indicates a failing converter."],
+["P0422","P","Catalyst","Warm Up Catalyst Efficiency Below Threshold (Bank 1)",2,"","P0421"],
+["P0430","P","Catalyst","Catalyst System Efficiency Below Threshold (Bank 2)",2,"Worn catalytic converter|Failing rear O2 sensor|Exhaust leak|Engine misfire damaging cat|Oil burning","P0420|P0432|P0156|P0161","The PCM compares upstream and downstream O2 sensor voltages on Bank 2. If downstream sensor activity mirrors upstream too closely, the converter is not cleaning emissions effectively — efficiency has dropped below EPA threshold."],
+["P0431","P","Catalyst","Warm Up Catalyst Efficiency Below Threshold (Bank 2)",2,"","P0430","Bank 2 warm-up catalyst efficiency is below threshold."],
+["P0432","P","Catalyst","Main Catalyst Efficiency Below Threshold (Bank 2)",2,"","P0430"],
+["P0440","P","EVAP","Evaporative Emission Control System",1,"Loose or damaged gas cap|EVAP canister vent valve|Leak in EVAP hose|Purge valve failure","P0441|P0442|P0446|P0455|P0456","The EVAP system traps fuel vapors from the tank in a charcoal canister. The PCM monitors the system for leaks during the evaporative emissions test. General fault indicates system malfunction."],
+["P0441","P","EVAP","Evaporative Emission Control System Incorrect Purge Flow",1,"Faulty purge valve|Vacuum hose leak|Blocked EVAP line","P0440|P0446","The EVAP purge flow is not within expected range. The purge valve may be stuck open/closed or vacuum hoses leaking."],
+["P0442","P","EVAP","Evaporative Emission Control System Leak Detected (Small Leak)",1,"Loose gas cap|Cracked EVAP hose|Faulty purge or vent valve|Small leak in EVAP system","P0440|P0456","The EVAP system performs a leak check by pressurizing and monitoring pressure decay. A small leak (0.020-0.040 inch) was detected — commonly a loose/cracked gas cap or small leak in hoses/canister."],
+["P0443","P","EVAP","Evaporative Emission Control System Purge Control Valve Circuit",1,"Faulty purge solenoid|Wiring issue","P0440|P0441","The EVAP purge valve circuit is not functioning. The PCM cannot control purge flow, affecting evaporative emissions control."],
+["P0444","P","EVAP","Evaporative Emission Control System Purge Control Valve Circuit/Open",1,"","P0443"],
+["P0445","P","EVAP","Evaporative Emission Control System Purge Control Valve Circuit Shorted",1,"","P0443"],
+["P0446","P","EVAP","Evaporative Emission Control System Vent Control Circuit",1,"Faulty vent valve|Blocked vent hose|Wiring issue","P0440|P0441","The EVAP vent valve circuit is faulty. The vent valve allows fresh air into the system during leak testing — blockage prevents proper leak detection."],
+["P0447","P","EVAP","Evaporative Emission Control System Vent Control Circuit/Open",1,"","P0446"],
+["P0448","P","EVAP","Evaporative Emission Control System Vent Control Circuit Shorted",1,"","P0446"],
+["P0449","P","EVAP","Evaporative Emission Control System Vent Valve/Solenoid Circuit",1,"Faulty vent solenoid|Wiring|Connector corrosion","P0446","The EVAP vent solenoid circuit is not responding to PCM commands. This affects the leak detection monitoring process."],
+["P0450","P","EVAP","Evaporative Emission Control System Leak Detection Pump",1,"","","The EVAP leak detection pump (LDM) circuit is faulty."],
+["P0451","P","EVAP","Evaporative Emission Control System Pressure Sensor Range/Performance",1,"Faulty FTP sensor|Wiring issue","P0452|P0453","The Fuel Tank Pressure sensor (part of EVAP system) reading is outside expected range, affecting leak detection accuracy."],
+["P0452","P","EVAP","Evaporative Emission Control System Pressure Sensor Low Input",1,"","P0451"],
+["P0453","P","EVAP","Evaporative Emission Control System Pressure Sensor High Input",1,"","P0451"],
+["P0454","P","EVAP","Evaporative Emission Control System Pressure Sensor Intermittent",1,"","P0451"],
+["P0455","P","EVAP","Evaporative Emission Control System Leak Detected (Gross Leak)",1,"Missing gas cap|Major EVAP hose disconnected|Cracked EVAP canister|Faulty purge valve stuck open","P0440|P0456"],
+["P0456","P","EVAP","Evaporative Emission Control System Leak Detected (Very Small Leak)",1,"Slightly loose gas cap|Hairline crack in EVAP hose|Aging gas cap seal","P0440|P0442|P0455"],
+["P0461","P","Fuel","Fuel Level Sensor Circuit Range/Performance",1,"Faulty fuel level sender|Wiring|Corroded connector","P0462|P0463"],
+["P0462","P","Fuel","Fuel Level Sensor Circuit Low Input",1,"","P0461"],
+["P0463","P","Fuel","Fuel Level Sensor Circuit High Input",1,"","P0461"],
+["P0480","P","Cooling","Cooling Fan 1 Control Circuit",2,"Faulty fan relay|Fan motor failure|Wiring issue|Blown fuse","P0481"],
+["P0481","P","Cooling","Cooling Fan 2 Control Circuit",2,"","P0480"],
+["P0500","P","VSS","Vehicle Speed Sensor A",2,"Faulty VSS|Wiring issue|Speedometer gear failure","P0501|P0503"],
+["P0501","P","VSS","Vehicle Speed Sensor A Range/Performance",2,"","P0500"],
+["P0503","P","VSS","Vehicle Speed Sensor A Intermittent/Erratic/High",2,"","P0500"],
+["P0505","P","Idle","Idle Air Control System",2,"Dirty throttle body|Faulty IAC valve|Vacuum leak|Carbon buildup","P0506|P0507"],
+["P0506","P","Idle","Idle Air Control System RPM Lower Than Expected",2,"Vacuum leak|Dirty throttle body|Faulty IAC|EGR valve stuck open","P0505|P0507"],
+["P0507","P","Idle","Idle Air Control System RPM Higher Than Expected",2,"Vacuum leak|Dirty throttle body|Faulty IAC|Intake gasket leak","P0505|P0506|P0171"],
+["P0508","P","Idle","Idle Air Control System Circuit Low",2,"","P0505"],
+["P0509","P","Idle","Idle Air Control System Circuit High",2,"","P0505"],
+["P0520","P","Oil","Engine Oil Pressure Sensor/Switch Circuit",2,"Faulty oil pressure sensor|Wiring|Low oil level|Oil pump wear","P0521|P0522|P0523"],
+["P0521","P","Oil","Engine Oil Pressure Sensor/Switch Range/Performance",2,"","P0520"],
+["P0522","P","Oil","Engine Oil Pressure Sensor/Switch Low",3,"Low oil level|Faulty oil pump|Worn engine bearings|Clogged oil pickup","P0520"],
+["P0523","P","Oil","Engine Oil Pressure Sensor/Switch High",2,"Faulty sensor|Wiring short","P0520"],
+["P0562","P","Electrical","System Voltage Low",2,"Weak battery|Failing alternator|Loose belt|Corroded terminals|Parasitic drain","P0563"],
+["P0563","P","Electrical","System Voltage High",2,"Faulty voltage regulator|Overcharging alternator|Bad battery connections","P0562"],
+["P0570","P","Brake","Brake Switch A Circuit",1,"Faulty brake switch|Misadjusted brake pedal|Wiring issue","P0571|P0572|P0573"],
+["P0571","P","Brake","Brake Switch A Circuit Range/Performance",1,"","P0570"],
+["P0572","P","Brake","Brake Switch A Circuit Low",1,"","P0570"],
+["P0573","P","Brake","Brake Switch A Circuit High",1,"","P0570"],
+["P0574","P","Cruise","Cruise Control Resume Switch Circuit",1,"Faulty cruise switch|Wiring|Steering wheel controls","P0575"],
+["P0575","P","Cruise","Cruise Control Set Switch Circuit",1,"","P0574"],
+["P0600","P","CAN","Serial Communication Link",2,"ECM internal failure|Wiring between modules|CAN bus issue","P0601|U0100"],
+["P0601","P","ECM","Internal Control Module Memory Check Sum Error",3,"Faulty ECM|Needs reprogramming|Voltage spike damage","P0600|P0602"],
+["P0602","P","ECM","Control Module Programming Error",2,"ECM needs reprogramming|Interrupted flash|Faulty ECM","P0601"],
+["P0603","P","ECM","Internal Control Module KAM Error",2,"Battery disconnected|ECM fault|Low voltage","P0601"],
+["P0606","P","ECM","PCM Processor Fault",3,"Faulty ECM/PCM|Internal processor error|Voltage issue","P0601"],
+["P0627","P","Fuel","Fuel Pump A Control Circuit/Open",3,"Faulty fuel pump relay|Fuel pump driver module|Wiring open","P0230|P0628"],
+["P0628","P","Fuel","Fuel Pump A Control Circuit Low",3,"","P0627"],
+["P0629","P","Fuel","Fuel Pump A Control Circuit High",2,"","P0627"],
+["P0700","P","Transmission","Transmission Control System (MIL Request)",2,"TCM detected a fault — check for additional transmission codes|Wiring between ECM and TCM","P0701"],
+["P0701","P","Transmission","Transmission Control System Range/Performance",2,"TCM fault|Low trans fluid|Internal failure","P0700"],
+["P0710","P","Transmission","Transmission Fluid Temperature Sensor Circuit",2,"Faulty TFT sensor|Wiring|Low fluid","P0711|P0218"],
+["P0711","P","Transmission","Transmission Fluid Temperature Sensor Range/Performance",2,"","P0710|P0218"],
+["P0715","P","Transmission","Input/Turbine Speed Sensor Circuit",2,"Faulty input speed sensor|Wiring|Internal trans issue","P0716|P0720"],
+["P0716","P","Transmission","Input/Turbine Speed Sensor Circuit Range/Performance",2,"","P0715"],
+["P0717","P","Transmission","Input/Turbine Speed Sensor Circuit No Signal",2,"","P0715"],
+["P0720","P","Transmission","Output Speed Sensor Circuit",2,"Faulty output speed sensor|Wiring|VSS issue","P0721|P0500|P0715"],
+["P0721","P","Transmission","Output Speed Sensor Circuit Range/Performance",2,"","P0720"],
+["P0730","P","Transmission","Incorrect Gear Ratio",3,"Low trans fluid|Worn clutch packs|Faulty shift solenoid|Internal trans failure","P0731|P0732|P0733"],
+["P0731","P","Transmission","Gear 1 Incorrect Ratio",3,"","P0730"],
+["P0732","P","Transmission","Gear 2 Incorrect Ratio",3,"","P0730"],
+["P0733","P","Transmission","Gear 3 Incorrect Ratio",3,"","P0730"],
+["P0734","P","Transmission","Gear 4 Incorrect Ratio",3,"","P0730"],
+["P0735","P","Transmission","Gear 5 Incorrect Ratio",3,"","P0730"],
+["P0740","P","Transmission","Torque Converter Clutch Circuit",2,"Faulty TCC solenoid|Wiring|Low trans fluid|Internal trans issue","P0741|P0742|P0743"],
+["P0741","P","Transmission","Torque Converter Clutch Circuit Stuck Off",2,"Faulty TCC solenoid|Internal trans|Low fluid","P0740"],
+["P0742","P","Transmission","Torque Converter Clutch Circuit Stuck On",3,"Faulty TCC solenoid|Valve body issue|Internal failure","P0740"],
+["P0743","P","Transmission","Torque Converter Clutch Circuit Electrical",2,"TCC solenoid wiring|Connector issue","P0740"],
+["P0750","P","Transmission","Shift Solenoid A",2,"Faulty shift solenoid A|Wiring|Valve body issue|Dirty trans fluid","P0751|P0752|P0753"],
+["P0751","P","Transmission","Shift Solenoid A Performance/Stuck Off",2,"","P0750"],
+["P0752","P","Transmission","Shift Solenoid A Stuck On",2,"","P0750"],
+["P0753","P","Transmission","Shift Solenoid A Electrical",2,"","P0750"],
+["P0755","P","Transmission","Shift Solenoid B",2,"","P0756|P0757|P0758"],
+["P0756","P","Transmission","Shift Solenoid B Performance/Stuck Off",2,"","P0755"],
+["P0757","P","Transmission","Shift Solenoid B Stuck On",2,"","P0755"],
+["P0758","P","Transmission","Shift Solenoid B Electrical",2,"","P0755"],
+["P0760","P","Transmission","Shift Solenoid C",2,"","P0761|P0762|P0763","The third shift solenoid (Shift Solenoid C) circuit is faulty. This solenoid controls gear selection in some transmissions."],
+["P0761","P","Transmission","Shift Solenoid C Performance/Stuck Off",2,"","P0760"],
+["P0762","P","Transmission","Shift Solenoid C Stuck On",2,"","P0760"],
+["P0763","P","Transmission","Shift Solenoid C Electrical",2,"","P0760"],
+["P0765","P","Transmission","Shift Solenoid D",2,"","P0766|P0767|P0768","The fourth shift solenoid (Shift Solenoid D) circuit is faulty."],
+["P0766","P","Transmission","Shift Solenoid D Performance/Stuck Off",2,"","P0765"],
+["P0767","P","Transmission","Shift Solenoid D Stuck On",2,"","P0765"],
+["P0768","P","Transmission","Shift Solenoid D Electrical",2,"","P0765"],
+["P0770","P","Transmission","Shift Solenoid E",2,"","P0771|P0772|P0773","The fifth shift solenoid (Shift Solenoid E) circuit is faulty."],
+["P0771","P","Transmission","Shift Solenoid E Performance/Stuck Off",2,"","P0770"],
+["P0772","P","Transmission","Shift Solenoid E Stuck On",2,"","P0770"],
+["P0773","P","Transmission","Shift Solenoid E Electrical",2,"","P0770"],
+["P0775","P","Transmission","Pressure Control Solenoid A",2,"Faulty EPC solenoid|Valve body issue|Low trans fluid|Dirty trans fluid","P0776|P0777|P0778","The Pressure Control Solenoid A (also called Electronic Pressure Control solenoid) regulates transmission line pressure. The TCM adjusts this solenoid to control shift quality and torque converter clutch apply pressure."],
+["P0776","P","Transmission","Pressure Control Solenoid A Performance/Stuck Off",2,"Faulty EPC solenoid|Valve body issue|Low trans fluid","P0775"],
+["P0777","P","Transmission","Pressure Control Solenoid A Stuck On",2,"","P0775","The EPC (Electronic Pressure Control) solenoid is stuck in the applied position."],
+["P0778","P","Transmission","Pressure Control Solenoid A Electrical",2,"","P0775"],
+["P0780","P","Transmission","Shift Error",2,"Shift solenoid issue|Valve body problem|Internal transmission","P0730"],
+["P0781","P","Transmission","1-2 Shift Error",2,"","P0731|P0780"],
+["P0782","P","Transmission","2-3 Shift Error",2,"","P0732|P0780"],
+["P0783","P","Transmission","3-4 Shift Error",2,"","P0733|P0780"],
+["P0784","P","Transmission","4-5 Shift Error",2,"","P0734|P0780"],
+["P1000","P","Readiness","OBD-II Monitor Testing Not Complete (Ford/Mazda/Jaguar)",0,"Normal after battery disconnect or code clear|Drive cycle not yet completed|Not a fault","","This is a manufacturer-specific code primarily used by Ford, Mazda, and Jaguar/Land Rover. It indicates the OBD-II system has not completed its readiness monitors (self-tests). Not a fault — drive the vehicle through a complete drive cycle to clear."],
+// ===== P2xxx =====
+["P2002","P","DPF","Diesel Particulate Filter Efficiency Below Threshold (Bank 1)",2,"Clogged DPF|Failed regen cycles|Faulty DPF pressure sensor|Excessive soot from engine issue","P2003|P2463"],
+["P2003","P","DPF","Diesel Particulate Filter Efficiency Below Threshold (Bank 2)",2,"","P2002"],
+["P2004","P","Intake","Intake Manifold Runner Control Stuck Open (Bank 1)",2,"Faulty IMRC actuator|Broken linkage|Vacuum leak","P2005|P2006"],
+["P2005","P","Intake","Intake Manifold Runner Control Stuck Open (Bank 2)",2,"","P2004"],
+["P2006","P","Intake","Intake Manifold Runner Control Stuck Closed (Bank 1)",2,"","P2004"],
+["P2007","P","Intake","Intake Manifold Runner Control Stuck Closed (Bank 2)",2,"","P2006"],
+["P2008","P","Intake","Intake Manifold Runner Control Circuit/Open (Bank 1)",2,"","P2004"],
+["P2015","P","Intake","Intake Manifold Runner Position Sensor/Switch Range/Performance (Bank 1)",2,"Faulty IMRC sensor|Swirl flap issues|Wiring","P2004"],
+["P2016","P","Intake","Intake Manifold Runner Position Sensor/Switch Circuit Low (Bank 1)",2,"","P2015"],
+["P2017","P","Intake","Intake Manifold Runner Position Sensor/Switch Circuit High (Bank 1)",2,"","P2015"],
+["P2096","P","Fuel Trim","Post Catalyst Fuel Trim System Too Lean (Bank 1)",2,"Exhaust leak|Failing catalytic converter|Rear O2 sensor|Fuel system lean","P0420|P0171"],
+["P2097","P","Fuel Trim","Post Catalyst Fuel Trim System Too Rich (Bank 1)",2,"","P0420|P0172"],
+["P2098","P","Fuel Trim","Post Catalyst Fuel Trim System Too Lean (Bank 2)",2,"","P0430|P0174"],
+["P2099","P","Fuel Trim","Post Catalyst Fuel Trim System Too Rich (Bank 2)",2,"","P0430|P0175"],
+["P2100","P","Throttle","Throttle Actuator Control Motor Circuit/Open",3,"Faulty electronic throttle body|Wiring|ECM issue","P2101|P2102"],
+["P2101","P","Throttle","Throttle Actuator Control Motor Circuit Range/Performance",3,"Dirty throttle body|Faulty throttle actuator|Wiring","P2100"],
+["P2102","P","Throttle","Throttle Actuator Control Motor Circuit Low",3,"","P2100"],
+["P2103","P","Throttle","Throttle Actuator Control Motor Circuit High",3,"","P2100"],
+["P2104","P","Throttle","Throttle Actuator Control System - Forced Idle",3,"Other fault forcing limp mode|Throttle body issue","P2100"],
+["P2106","P","Throttle","Throttle Actuator Control System - Forced Engine Shutdown",3,"Severe throttle fault|ECM safety shutdown","P2100"],
+["P2110","P","Throttle","Throttle Actuator Control System - Forced Limited RPM",3,"Throttle fault forcing limp mode|Check for other codes","P2100"],
+["P2111","P","Throttle","Throttle Actuator Control System - Stuck Open",3,"Carbon buildup in throttle|Faulty throttle motor|Wiring","P2100|P2112"],
+["P2112","P","Throttle","Throttle Actuator Control System - Stuck Closed",3,"Faulty throttle motor|Wiring|Ice/debris blocking throttle","P2100|P2111"],
+["P2122","P","TPS","Throttle/Pedal Position Sensor D Circuit Low",2,"Faulty accelerator pedal sensor|Wiring short|Connector issue","P2123|P2127|P2138"],
+["P2123","P","TPS","Throttle/Pedal Position Sensor D Circuit High",2,"","P2122"],
+["P2127","P","TPS","Throttle/Pedal Position Sensor E Circuit Low",2,"","P2128|P2122|P2138"],
+["P2128","P","TPS","Throttle/Pedal Position Sensor E Circuit High",2,"","P2127"],
+["P2135","P","TPS","Throttle/Pedal Position Sensor A/B Voltage Correlation",3,"Faulty TPS|Dirty throttle body|Wiring issue|Connector corrosion","P2138|P0120|P0220"],
+["P2138","P","TPS","Throttle/Pedal Position Sensor D/E Voltage Correlation",3,"Faulty accelerator pedal sensor|Wiring|Connector","P2135|P2122|P2127"],
+["P2187","P","Fuel Trim","System Too Lean at Idle (Bank 1)",2,"Vacuum leak|PCV valve leak|Intake gasket leak|Dirty MAF","P0171|P2189"],
+["P2188","P","Fuel Trim","System Too Rich at Idle (Bank 1)",2,"Leaking injector|Faulty O2 sensor|EVAP purge stuck open","P0172|P2190"],
+["P2189","P","Fuel Trim","System Too Lean at Idle (Bank 2)",2,"","P0174|P2187"],
+["P2190","P","Fuel Trim","System Too Rich at Idle (Bank 2)",2,"","P0175|P2188"],
+["P2195","P","O2 Sensor","O2 Sensor Signal Biased/Stuck Lean (Bank 1 Sensor 1)",2,"Vacuum leak|Faulty O2 sensor|Exhaust leak","P0171|P0131"],
+["P2196","P","O2 Sensor","O2 Sensor Signal Biased/Stuck Rich (Bank 1 Sensor 1)",2,"Leaking injector|Faulty O2|High fuel pressure","P0172|P0132"],
+["P2197","P","O2 Sensor","O2 Sensor Signal Biased/Stuck Lean (Bank 2 Sensor 1)",2,"","P0174|P2195"],
+["P2198","P","O2 Sensor","O2 Sensor Signal Biased/Stuck Rich (Bank 2 Sensor 1)",2,"","P0175|P2196"],
+["P2263","P","Turbo","Turbocharger/Supercharger Boost System Performance",2,"Boost leak|Wastegate issue|Worn turbo|VGT actuator failure","P0234|P0299"],
+["P2270","P","O2 Sensor","O2 Sensor Signal Biased/Stuck Lean (Bank 1 Sensor 2)",1,"Failing cat converter|Rear O2 sensor|Exhaust leak","P0420|P0136"],
+["P2271","P","O2 Sensor","O2 Sensor Signal Biased/Stuck Rich (Bank 1 Sensor 2)",1,"","P0420|P0136"],
+["P2279","P","Intake","Intake Air System Leak",2,"Intake hose crack|Loose clamp after MAF|Torn intake boot","P0171|P0101"],
+["P2404","P","EVAP","Evaporative Emission System Leak Detection Pump Sense Circuit Range/Performance",1,"","P0440|P0456"],
+["P2440","P","AIR","Secondary Air Injection System Switching Valve Stuck Open (Bank 1)",1,"","P0410"],
+["P2443","P","AIR","Secondary Air Injection System Switching Valve Stuck Closed (Bank 1)",1,"","P0410"],
+["P2463","P","DPF","Diesel Particulate Filter Restriction - Soot Accumulation",2,"Excessive short trips preventing regen|Faulty DPF temp sensor|EGR issue causing excess soot|DPF needs forced regen","P2002","The diesel particulate filter traps soot from exhaust. The PCM monitors differential pressure across the DPF. High restriction indicates excessive soot accumulation — the filter needs regeneration (burning off soot) or is nearing capacity."],
+// ===== BODY (B) GENERIC CODES =====
+["B0001","B","Airbag","Driver Frontal Stage 1 Deployment Control",3,"Airbag module fault|Wiring issue|Clockspring failure","B0002|B0003","The restraint control module monitors the airbag system. Driver frontal stage 1 refers to the first-stage deployment circuit. If the module detects a fault in this circuit, it disables airbag deployment for safety."],
+["B0002","B","Airbag","Driver Frontal Stage 2 Deployment Control",3,"","B0001","The second-stage deployment circuit for the driver frontal airbag has a fault. This stage activates at higher crash severity."],
+["B0003","B","Airbag","Passenger Frontal Stage 1 Deployment Control",3,"Airbag module fault|Passenger sensor|Wiring","B0004","The passenger frontal airbag first-stage deployment circuit is faulty. The module prevents deployment to ensure safety."],
+["B0004","B","Airbag","Passenger Frontal Stage 2 Deployment Control",3,"","B0003","The passenger frontal airbag second-stage deployment circuit has a fault."],
+["B0010","B","Airbag","Driver Side Deployment Control",3,"Side airbag module|Wiring|Impact sensor","B0011","The driver side (thorax) airbag deployment circuit is faulty. Side airbags deploy in side impacts to protect torso."],
+["B0011","B","Airbag","Passenger Side Deployment Control",3,"","B0010","The passenger side airbag deployment circuit is faulty."],
+["B0020","B","Airbag","Driver Curtain Deployment Control",3,"","","The driver side curtain airbag deployment circuit has a fault. Curtain airbags deploy from the roof to protect head in side impacts."],
+["B0021","B","Airbag","Passenger Curtain Deployment Control",3,"","","The passenger side curtain airbag deployment circuit is faulty."],
+["B0028","B","Airbag","Driver Seat Belt Pretensioner Deployment Control",3,"","","The driver seat belt pretensioner circuit (which tightens belt in crash) has a fault."],
+["B0029","B","Airbag","Passenger Seat Belt Pretensioner Deployment Control",3,"","","The passenger seat belt pretensioner deployment circuit is faulty."],
+["B0050","B","Restraints","Driver Seatbelt Sensor",2,"Faulty seatbelt buckle sensor|Wiring|Connector corrosion","B0051","The driver seatbelt sensor detects whether the seatbelt is buckled. The restraints module uses this input for airbag deployment strategy and seatbelt reminder functions."],
+["B0051","B","Restraints","Driver Seatbelt Sensor - Signal Performance",2,"","B0050","The driver seatbelt sensor signal is abnormal — could indicate sensor issue, wiring, or buckle switch problem."],
+["B0060","B","Restraints","Left Side Restraints Sensor 1",2,"","B0061","The left side restraints sensor circuit is faulty. This sensor is part of the side impact detection system for the restraints control module."],
+["B0061","B","Restraints","Right Side Restraints Sensor 1",2,"","B0060","The right side restraints sensor circuit is faulty. This sensor is part of the side impact detection system."],
+["B0081","B","Restraints","First Row Center Seatbelt Load Limiter Deployment Control",2,"Faulty seatbelt load limiter|Wiring|Restraint control module issue","","The first row center seatbelt load limiter deployment circuit is faulty. The load limiter allows controlled seatbelt webbing payout during a crash to reduce chest loading on the occupant."],
+["B0092","B","Restraints","Left Side Restraints Sensor 2",2,"Faulty left side impact sensor|Wiring|Connector corrosion","B0093","The second left side restraints sensor circuit is faulty. This sensor provides redundant side impact detection data to the restraints control module."],
+["B0093","B","Restraints","Left Side Restraints Sensor 3",2,"Faulty left side impact sensor|Wiring","B0092","The third left side restraints sensor circuit is faulty. This sensor provides additional side impact detection for the restraints system."],
+ // ===== CHASSIS (C) GENERIC CODES =====
+["C0035","C","ABS","Right Front Wheel Speed Sensor Supply",2,"Faulty wheel speed sensor|Wiring|Damaged tone ring|Bearing wear","C0036|C0040|C0045","The ABS module monitors wheel speed via sensors at each wheel. The right front sensor supply circuit is faulty — needed for anti-lock braking and stability control. Note: older SAE revisions mapped this to the left front sensor."],
+["C0036","C","ABS","Right Front Wheel Speed Sensor Supply Range/Performance",2,"","C0035","The right front wheel speed sensor supply signal is abnormal — could indicate damaged tone ring or intermittent sensor."],
+["C0040","C","ABS","Right Front Wheel Speed Sensor Circuit",2,"Faulty wheel speed sensor|Wiring|Damaged tone ring","C0035|C0045","The right front wheel speed sensor circuit is faulty."],
+["C0041","C","ABS","Right Front Wheel Speed Sensor Circuit Range/Performance",2,"","C0040","The right front wheel speed sensor signal is abnormal."],
+["C0045","C","ABS","Left Rear Wheel Speed Sensor Circuit",2,"Faulty wheel speed sensor|Wiring|Damaged tone ring|Bearing wear","C0035|C0050","The left rear wheel speed sensor circuit is faulty."],
+["C0046","C","ABS","Left Rear Wheel Speed Sensor Circuit Range/Performance",2,"","C0045","The left rear wheel speed sensor signal is abnormal."],
+["C0050","C","ABS","Right Rear Wheel Speed Sensor Circuit",2,"Faulty wheel speed sensor|Wiring|Tone ring","C0045|C0035","The right rear wheel speed sensor circuit is faulty."],
+["C0051","C","ABS","Right Rear Wheel Speed Sensor Circuit Range/Performance",2,"","C0050","The right rear wheel speed sensor signal is abnormal."],
+["C0060","C","ABS","Left Front ABS Solenoid #1 Circuit",3,"Faulty ABS solenoid|Wiring|ABS module failure","C0070","The left front ABS solenoid #1 circuit is not responding. The ABS solenoids control brake pressure modulation during anti-lock braking — fault may disable ABS."],
+["C0070","C","ABS","ABS Valve Circuit",3,"Faulty ABS modulator valve|Wiring|ABS module","C0060","The ABS modulator valve circuit is faulty. These valves control brake pressure during ABS activation."],
+["C0095","C","ABS","ABS Brake Lamp Switch Circuit Low",2,"Faulty brake lamp switch|Wiring short to ground","C0096","The ABS brake lamp switch circuit shows low voltage. The ABS module uses brake switch input for stability and traction control functions."],
+["C0096","C","ABS","ABS Brake Lamp Switch Circuit High",2,"Faulty brake lamp switch|Wiring short to power","C0095","The ABS brake lamp switch circuit shows high voltage — could indicate switch stuck on or wiring short."],
+["C0110","C","ABS","Pump Motor Circuit",3,"ABS pump failure|Relay|Module","","The ABS pump motor circuit has a general fault. The pump provides hydraulic pressure for anti-lock braking — fault may disable ABS."],
+["C0121","C","Stability","Stability Control System - Valve Circuit",2,"Faulty stability control module|Valve issue","C0130","The stability control (ESC) valve circuit is faulty. These valves control individual wheel braking for stability."],
+["C0130","C","Stability","Stability Control System Disabled",2,"Wheel speed sensor issue|Steering angle sensor|ABS fault triggering ESC off","C0121","The electronic stability control system has been disabled due to a fault. The ESC system relies on wheel speed and steering angle inputs."],
+["C0131","C","Stability","Stability Control System Indicator Lamp Circuit",1,"Bulb|Wiring|BCM issue","C0130","The stability control indicator lamp circuit is faulty — the light may not illuminate when needed."],
+["C0161","C","Brakes","Brake System Pressure Circuit",2,"Low brake fluid|Faulty pressure sensor|Master cylinder leak|Brake booster issue","C0162","The brake system pressure sensor circuit is faulty. This sensor monitors brake line pressure for brake assist functions."],
+["C0162","C","Brakes","Brake System Pressure Circuit Range/Performance",2,"","C0161","The brake pressure sensor reading is outside expected range."],
+["C0196","C","ABS","Yaw Rate Sensor Circuit",2,"Faulty yaw sensor|Wiring|ESC module issue","C0197"],
+["C0197","C","ABS","Yaw Rate Sensor Circuit Range/Performance",2,"","C0196"],
+["C0235","C","ABS","Rear Wheel Speed Signal Circuit",2,"","C0045|C0050"],
+["C0241","C","Stability","EBCM Control Valve Circuit",2,"ABS/ESC module fault","C0060"],
+["C0265","C","ABS","EBCM Motor Relay Circuit",3,"Faulty ABS relay|ABS module failure","C0060"],
+["C0300","C","Drivetrain","Rear Speed Sensor Circuit",2,"Faulty rear speed sensor|Wiring|Damaged tone ring|Rear differential issue","C0301","The rear speed sensor (rear propshaft speed sensor) monitors rear axle or propshaft speed. The PCM/ABS module uses this for traction control and vehicle speed calculations."],
+["C0301","C","Drivetrain","Rear Speed Sensor Circuit Range/Performance",2,"","C0300"],
+["C0455","C","Steering","Steering Angle Sensor Circuit",2,"Faulty steering angle sensor|Needs calibration after alignment|Wiring|Clockspring","C0456"],
+["C0456","C","Steering","Steering Angle Sensor Circuit Range/Performance",2,"Sensor needs recalibration|Faulty sensor","C0455"],
+["C1000","C","Suspension","Suspension System General (Manufacturer-Specific)",1,"Faulty suspension control module|Wiring|Height sensor","","Manufacturer-specific code — definition varies by vehicle make. Generally indicates a suspension control system fault. Consult your vehicle's service manual for the exact definition."],
+["C1010","C","Suspension","Left Front Ride Height Sensor Circuit (Manufacturer-Specific)",1,"Faulty height sensor|Wiring|Suspension issue","","Manufacturer-specific code. Generally refers to the left front suspension height sensor circuit. Exact definition varies by make."],
+["C1011","C","Suspension","Right Front Ride Height Sensor Circuit (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally refers to the right front suspension height sensor circuit."],
+["C1012","C","Suspension","Left Rear Ride Height Sensor Circuit (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally refers to the left rear suspension height sensor circuit."],
+["C1013","C","Suspension","Right Rear Ride Height Sensor Circuit (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally refers to the right rear suspension height sensor circuit."],
+["C1020","C","Suspension","Suspension Air Compressor Circuit (Manufacturer-Specific)",2,"Faulty air compressor|Relay|Wiring","","Manufacturer-specific code. Generally refers to the air suspension compressor circuit."],
+["C1021","C","Suspension","Suspension Air Compressor Circuit Low (Manufacturer-Specific)",2,"","C1020"],
+["C1022","C","Suspension","Suspension Air Compressor Circuit High (Manufacturer-Specific)",2,"","C1020"],
+["C1030","C","Suspension","Suspension Air Valve Circuit (Manufacturer-Specific)",1,"Faulty air valve|Wiring|Module","","Manufacturer-specific code. Generally refers to the air suspension valve circuit."],
+["C1100","C","TPMS","Tire Pressure Monitoring System General (Manufacturer-Specific)",1,"Failed TPMS sensor|Low battery in sensor|Wiring|Module fault","","Manufacturer-specific code. Definition varies by make — on some vehicles this relates to TPMS, on others to ABS. Consult your vehicle's service manual."],
+["C1101","C","TPMS","Tire Pressure Monitoring System Module Circuit (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally refers to a TPMS module circuit fault, but definition varies by make."],
+["C1110","C","TPMS","Tire Pressure Sensor (Left Front) Circuit (Manufacturer-Specific)",1,"Faulty TPMS sensor|Wiring|Low battery","","Manufacturer-specific code. Generally refers to the left front tire pressure sensor circuit."],
+["C1111","C","TPMS","Tire Pressure Sensor (Right Front) Circuit (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally refers to the right front tire pressure sensor circuit."],
+["C1112","C","TPMS","Tire Pressure Sensor (Left Rear) Circuit (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally refers to the left rear tire pressure sensor circuit."],
+["C1113","C","TPMS","Tire Pressure Sensor (Right Rear) Circuit (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally refers to the right rear tire pressure sensor circuit."],
+["C1120","C","TPMS","Tire Pressure Sensor Low Battery (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally indicates one or more TPMS sensors have low battery voltage."],
+// ===== U CODES =====
+["U0001","U","CAN Bus","High Speed CAN Communication Bus",2,"CAN bus wiring fault|Shorted CAN line|Faulty module pulling bus down|Damaged connector","U0002|U0100"],
+["U0002","U","CAN Bus","High Speed CAN Communication Bus Performance",2,"Intermittent CAN connection|Corroded connector|Wiring chafe","U0001"],
+["U0003","U","CAN Bus","High Speed CAN Communication Bus (+) Open",2,"Open circuit on CAN-H wire|Damaged connector pin","U0001|U0004"],
+["U0004","U","CAN Bus","High Speed CAN Communication Bus (+) Low",2,"CAN-H shorted to ground","U0001|U0003"],
+["U0005","U","CAN Bus","High Speed CAN Communication Bus (+) High",2,"","U0001"],
+["U0006","U","CAN Bus","High Speed CAN Communication Bus (-) Open",2,"Open circuit on CAN-L wire","U0001|U0007","The CAN-L (CAN Low) wire in the high-speed bus has an open circuit. This breaks CAN communication on that branch."],
+["U0007","U","CAN Bus","High Speed CAN Communication Bus (-) Low",2,"CAN-L shorted to ground","U0001|U0006","The CAN-L wire is shorted to ground, pulling the bus low and preventing communication."],
+["U0008","U","CAN Bus","High Speed CAN Communication Bus (-) High",2,"","U0001","The CAN-L wire is shorted to power (high), corrupting the CAN bus signal."],
+["U0009","U","CAN Bus","High Speed CAN Communication Bus (-) Shorted to Bus (+)",2,"CAN-H and CAN-L shorted together|Damaged wiring","U0001","The CAN-H and CAN-L wires are shorted together, causing bus communication failure."],
+["U0010","U","CAN Bus","Medium Speed CAN Communication Bus",2,"","U0011","The medium-speed CAN bus (used for body controls) has a general fault. This affects non-critical modules."],
+["U0011","U","CAN Bus","Medium Speed CAN Communication Bus Performance",2,"","U0010","The medium-speed CAN bus is experiencing communication issues — could be wiring or module fault."],
+["U0028","U","CAN Bus","Vehicle Communication Bus A Data Rate Performance",2,"","U0001","The CAN bus data rate is abnormal. This indicates bus timing issues or excessive capacitance on the bus."],
+["U0073","U","CAN Bus","Control Module Communication Bus A Off",3,"Total CAN bus failure|Shorted bus wiring|Failed gateway module","U0001|U0100","The primary CAN bus (bus A) is completely offline — all modules cannot communicate. This is a severe bus wiring fault."],
+["U0100","U","Lost Comm","Lost Communication with ECM/PCM A",3,"Faulty ECM/PCM|CAN bus wiring fault|Power/ground issue at ECM|Blown ECM fuse","U0001|U0101|P0600","The Controller Area Network (CAN) bus allows modules to communicate. When the ECM/PCM loses CAN communication, it indicates the ECM cannot exchange data with other modules — typically CAN bus wiring fault or failed ECM."],
+["U0101","U","Lost Comm","Lost Communication with TCM",2,"Faulty TCM|CAN wiring|TCM power/ground issue|Blown fuse","U0100|P0700","The Transmission Control Module is not communicating on the CAN bus. This could affect shift quality and transmission functions."],
+["U0102","U","Lost Comm","Lost Communication with Transfer Case Control Module",2,"Faulty module|Wiring|CAN bus","","The transfer case control module (4WD systems) is not responding on the CAN bus."],
+["U0103","U","Lost Comm","Lost Communication with Gear Shift Module",2,"","","The gear shift module (shifter interface) is not communicating. This may affect shift-by-wire functionality."],
+["U0104","U","Lost Comm","Lost Communication with Cruise Control Module",1,"","","The cruise control module has lost CAN communication. Adaptive cruise functions may be disabled."],
+["U0105","U","Lost Comm","Lost Communication with Fuel Injector Control Module",2,"","","The fuel injector control module is not communicating on the CAN bus."],
+["U0106","U","Lost Comm","Lost Communication with Glow Plug Control Module",2,"Faulty glow plug module|Wiring|CAN bus","","The glow plug control module (diesel engines) is not responding. This may affect cold starting."],
+["U0107","U","Lost Comm","Lost Communication with Throttle Actuator Control Module",3,"","U0100|P2100","The throttle control module is not communicating. This affects electronic throttle operation."],
+["U0108","U","Lost Comm","Lost Communication with Alternative Fuel Control Module",1,"","","The alternative fuel control module (CNG/LPG) is not communicating."],
+["U0109","U","Lost Comm","Lost Communication with Fuel Pump Control Module",3,"Faulty FPCM|Wiring|No fuel pump operation","P0627","The fuel pump control module is not responding. Without communication, the fuel pump may not operate properly."],
+["U0110","U","Lost Comm","Lost Communication with Drive Motor Control Module",2,"","","The drive motor control module (hybrid/electric vehicles) is not communicating."],
+["U0111","U","Lost Comm","Lost Communication with Battery Energy Control Module A",2,"","","The battery energy control module (hybrid systems) is not responding on the CAN bus."],
+["U0112","U","Lost Comm","Lost Communication with Battery Energy Control Module B",2,"","","The secondary battery energy control module is not communicating."],
+["U0113","U","Lost Comm","Lost Communication with Emissions Critical Control Info",2,"","","A module related to emissions control is not communicating. This may affect emissions testing."],
+["U0114","U","Lost Comm","Lost Communication with Four-Wheel Drive Clutch Control Module",2,"","","The 4WD clutch control module is not responding. This affects four-wheel-drive engagement."],
+["U0115","U","Lost Comm","Lost Communication with ECM/PCM B",3,"","U0100","The secondary ECM/PCM (often used for transmissions or diesel engines) is not communicating."],
+["U0121","U","Lost Comm","Lost Communication with ABS Control Module",3,"Faulty ABS module|CAN bus wiring|ABS module power/ground","C0060","The ABS module is not responding on the CAN bus. Without communication, stability control and ABS functions are disabled."],
+["U0122","U","Lost Comm","Lost Communication with Vehicle Dynamics Control Module",2,"","U0121","The vehicle dynamics control module (stability control) is not communicating."],
+["U0123","U","Lost Comm","Lost Communication with Yaw Rate Sensor Module",2,"","C0196","The yaw rate sensor module (used for stability control) is not responding."],
+["U0124","U","Lost Comm","Lost Communication with Lateral Acceleration Sensor Module",2,"","","The lateral acceleration sensor (measures cornering force) is not communicating."],
+["U0125","U","Lost Comm","Lost Communication with Multi-Axis Acceleration Sensor Module",2,"","","The multi-axis acceleration sensor (used for stability control) is not responding."],
+["U0126","U","Lost Comm","Lost Communication with Steering Angle Sensor Module",2,"Faulty sensor|Clockspring|CAN wiring","C0455","The steering angle sensor (which measures steering wheel position) is not communicating."],
+["U0127","U","Lost Comm","Lost Communication with Tire Pressure Monitor Module",1,"Faulty TPMS module|Wiring|Low battery in TPMS sensor","","The TPMS module is not responding. Tire pressure monitoring functions are disabled."],
+["U0128","U","Lost Comm","Lost Communication with Park Brake Control Module",2,"","","The electronic park brake module is not communicating. May affect parking brake functions."],
+["U0129","U","Lost Comm","Lost Communication with Brake System Control Module",3,"","U0121","The brake system control module is not responding. This affects brake functions and stability control."],
+["U0131","U","Lost Comm","Lost Communication with Power Steering Control Module",2,"","C0300","The power steering control module is not communicating. Electric power steering functions may be disabled."],
+["U0132","U","Lost Comm","Lost Communication with Ride Level Control Module",1,"","","The ride level control module (air suspension) is not responding."],
+["U0140","U","Lost Comm","Lost Communication with Body Control Module",2,"Faulty BCM|CAN wiring|BCM power/ground issue","U0141","The Body Control Module (BCM) is not communicating. The BCM controls lights, locks, wipers, and other body functions."],
+["U0141","U","Lost Comm","Lost Communication with Body Control Module B",2,"","U0140","The secondary BCM is not responding."],
+["U0142","U","Lost Comm","Lost Communication with Body Control Module C",2,"","U0140","The third BCM partition is not communicating."],
+["U0143","U","Lost Comm","Lost Communication with Body Control Module D",1,"","U0140","The fourth BCM partition has lost communication."],
+["U0144","U","Lost Comm","Lost Communication with Body Control Module E",1,"","U0140","The fifth BCM partition is not responding."],
+["U0145","U","Lost Comm","Lost Communication with Body Control Module F",1,"","U0140","The sixth BCM partition is not communicating."],
+["U0146","U","Lost Comm","Lost Communication with Gateway A",2,"Faulty gateway module|CAN bus issue","U0001","The gateway module (which routes messages between CAN buses) is not responding. This affects inter-module communication."],
+["U0147","U","Lost Comm","Lost Communication with Gateway B",2,"","U0146","The secondary gateway partition is not communicating."],
+["U0148","U","Lost Comm","Lost Communication with Gateway C",1,"","U0146","The tertiary gateway partition has lost communication."],
+["U0151","U","Lost Comm","Lost Communication with Restraints Control Module (Airbag)",3,"Faulty airbag module|CAN wiring|Clockspring|Module power issue","B0001","The restraints control module (airbag control module) is not responding. Airbag deployment may be disabled for safety."],
+["U0152","U","Lost Comm","Lost Communication with Side Restraints Control Module L",3,"","U0151","The left side restraints module is not communicating."],
+["U0153","U","Lost Comm","Lost Communication with Side Restraints Control Module R",3,"","U0151","The right side restraints module is not responding."],
+["U0154","U","Lost Comm","Lost Communication with Occupant Restraint Controller",3,"","U0151","The occupant restraint controller is not responding."],
+["U0155","U","Lost Comm","Lost Communication with Instrument Panel Cluster",2,"Faulty cluster|CAN bus|Wiring","","The instrument panel cluster (gauges) is not communicating. Gauge functions may be affected."],
+["U0156","U","Lost Comm","Lost Communication with Information Center A",1,"","U0155","The information center (display module) is not responding."],
+["U0157","U","Lost Comm","Lost Communication with Information Center B",1,"","","The secondary information center (rear seat entertainment display) is not responding."],
+["U0158","U","Lost Comm","Lost Communication with Head Up Display",1,"","","The heads-up display (HUD) module is not responding. Windshield projection features may be disabled."],
+["U0159","U","Lost Comm","Lost Communication with Parking Assist Control Module",1,"Faulty parking sensor module|Wiring",""],
+["U0164","U","Lost Comm","Lost Communication with HVAC Control Module",1,"Faulty HVAC module|Wiring|CAN bus","U0165"],
+["U0165","U","Lost Comm","Lost Communication with HVAC Control Module Rear",1,"","U0164"],
+["U0166","U","Lost Comm","Lost Communication with Auxiliary Heater Control Module",1,"","","The auxiliary heater control module (diesel block heaters, RV heaters) is not responding on the CAN bus."],
+["U0169","U","Lost Comm","Lost Communication with Sunroof Control Module",0,"","","The sunroof control module is not communicating. Power sunroof functions may be disabled."],
+["U0176","U","Lost Comm","Lost Communication with Heated Steering Wheel Module",0,"","","The heated steering wheel module is not responding. This feature may be disabled."],
+["U0187","U","Lost Comm","Lost Communication with Digital Disc Player/Changer Module",0,"","","The CD/DVD changer module is not communicating. Entertainment system may be affected."],
+["U0190","U","Lost Comm","Lost Communication with Digital Audio Receiver Module B",0,"","","The digital audio receiver module is not responding."],
+["U0195","U","Lost Comm","Lost Communication with Garage Door Opener Control Module",0,"","","The garage door opener module (integrated HomeLink) is not communicating."],
+["U0196","U","Lost Comm","Lost Communication with Phone Control Module",0,"","","The phone control module (Bluetooth integration) is not responding."],
+["U0197","U","Lost Comm","Lost Communication with Telematics Control Module",1,"","","The telematics module (OnStar, connected services) is not responding. Emergency and concierge services may be affected."],
+["U0198","U","Lost Comm","Lost Communication with Navigation Display Module",0,"","","The navigation display module is not communicating. Navigation functions may be disabled."],
+["U0210","U","Lost Comm","Lost Communication with Seat Control Module A",1,"","","The driver seat control module is not responding. Memory and power seat functions may be affected."],
+["U0211","U","Lost Comm","Lost Communication with Seat Control Module B",1,"","","The passenger seat control module is not responding."],
+["U0212","U","Lost Comm","Lost Communication with Seat Control Module C",0,"","","The rear seat control module is not responding."],
+["U0213","U","Lost Comm","Lost Communication with Seat Control Module D",0,"","","Additional seat control module is not responding."],
+["U0214","U","Lost Comm","Lost Communication with Remote Function Actuation",0,"","","The remote function module (remote start, etc.) is not communicating."],
+["U0220","U","Lost Comm","Lost Communication with Door Window Motor A",0,"","","The driver window motor module is not responding."],
+["U0221","U","Lost Comm","Lost Communication with Door Window Motor B",0,"","","The passenger window motor module is not responding."],
+["U0222","U","Lost Comm","Lost Communication with Door Window Motor C",0,"","","The rear driver window motor module is not responding."],
+["U0223","U","Lost Comm","Lost Communication with Door Window Motor D",0,"","","The rear passenger window motor module is not responding."],
+["U0230","U","Lost Comm","Lost Communication with Interior Lighting Control Module",0,"","","The interior lighting module is not responding. Automatic lighting functions may be affected."],
+["U0231","U","Lost Comm","Lost Communication with Rear Lighting Control Module",1,"","","The rear lighting control module is not responding. Trailer lighting may be affected."],
+["U0253","U","Lost Comm","Lost Communication with Liftgate/Trunk Control Module",1,"","","The liftgate control module is not responding. Power liftgate functions may be disabled."],
+["U0404","U","Invalid Data","Invalid Data Received from Gear Shift Module",1,"","","The gear shift module sent invalid data to other modules. This could indicate a module internal fault or communication error."],
+["U0416","U","Invalid Data","Invalid Data Received from Vehicle Dynamics Control Module",2,"","","The vehicle dynamics control module sent invalid data. Stability control functions may be affected."],
+["U0417","U","Invalid Data","Invalid Data Received from Parking Brake Control Module",1,"","","The park brake module sent invalid data. Electronic parking brake functions may be affected."],
+["U0428","U","Invalid Data","Invalid Data Received from Steering Column Control Module",2,"","","The steering column control module sent invalid data. Column tilt/ Telescope functions may be affected."],
+["U0430","U","Invalid Data","Invalid Data Received from Vehicle Speed Sensor",1,"","","The vehicle speed sensor sent invalid data."],
+["U0431","U","Invalid Data","Invalid Data Received from Odometer",0,"","","The odometer module sent invalid data."],
+["U0432","U","Invalid Data","Invalid Data Received from Power Steering Control Module",2,"","","The power steering module sent invalid data."],
+["U0433","U","Invalid Data","Invalid Data Received from Brake System Control Module",2,"","","The brake control module sent invalid data."],
+["U0434","U","Invalid Data","Invalid Data Received from Transmission Control Module",2,"","","The TCM sent invalid data."],
+["U0450","U","Invalid Data","Invalid Data Received from HVAC Control Module",1,"","","The HVAC module sent invalid data."],
+["U0451","U","Invalid Data","Invalid Data Received from Lighting Control Module",1,"","","The lighting control module sent invalid data."],
+["U0452","U","Invalid Data","Invalid Data Received from Door Control Module",1,"","","The door control module sent invalid data."],
+["U0453","U","Invalid Data","Invalid Data Received from Seat Control Module",1,"","","The seat control module sent invalid data."],
+["U0500","U","Lost Comm","Lost Communication with Audio Interface Module",0,"Faulty audio module|Wiring","","The audio interface module is not communicating."],
+["U0501","U","Lost Comm","Lost Communication with Video Interface Module",0,"","","The video interface module is not responding."],
+["U0505","U","Lost Comm","Lost Communication with Antenna Module",0,"","","The antenna module is not communicating."],
+["U0510","U","Lost Comm","Lost Communication with Compass Module",0,"","","The compass module is not responding."],
+["U0513","U","Lost Comm","Lost Communication with Mobile Phone Module",0,"","","The mobile phone (Bluetooth) module is not communicating."],
+["U0520","U","Lost Comm","Lost Communication with Voice Control Module",0,"","","The voice control module is not responding."],
+["U0530","U","Lost Comm","Lost Communication with Trailer Interface Module",1,"","","The trailer interface module is not communicating."],
+["U0540","U","Lost Comm","Lost Communication with Voice Activation Module",0,"","","The voice activation module is not responding."],
+["U0550","U","Lost Comm","Lost Communication with Anti-Theft Module",2,"Faulty immobilizer|Wiring","","The anti-theft/immobilizer module is not communicating."],
+["U1000","U","CAN Bus","CAN Communication Circuit (Manufacturer-Specific)",1,"Faulty module|CAN bus wiring|Corrosion","U1001","Manufacturer-specific code — definition varies by make. On Nissan: CAN Communication Circuit. On Ford: SCP Invalid/Missing Data. Consult your vehicle's service manual for the exact definition."],
+["U1001","U","CAN Bus","CAN Communication Circuit Performance (Manufacturer-Specific)",1,"","U1000","Manufacturer-specific code. Generally relates to CAN bus communication performance issues. Definition varies by make."],
+["U1002","U","CAN Bus","Communication Bus Fault B (Manufacturer-Specific)",1,"","U1003","Manufacturer-specific code. Generally relates to a secondary communication bus fault."],
+["U1003","U","CAN Bus","Communication Bus B Performance (Manufacturer-Specific)",1,"","U1002"],
+["U1100","U","CAN Bus","Communication Bus Fault (Manufacturer-Specific)",1,"","U1101","Manufacturer-specific code — definition varies by make. On Ford: SCP Invalid/Missing Data. The SAE generic code for low-speed CAN is U0019. Consult your vehicle's service manual."],
+["U1101","U","CAN Bus","Communication Bus Performance (Manufacturer-Specific)",1,"","U1100"],
+["U1110","U","CAN Bus","Communication Bus Channel 1 (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally relates to a communication bus channel fault."],
+["U1120","U","CAN Bus","Communication Bus Channel 2 (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally relates to a communication bus channel fault."],
+["U1130","U","CAN Bus","Communication Bus Channel 3 (Manufacturer-Specific)",1,"","","Manufacturer-specific code. Generally relates to a communication bus channel fault."],
+];
+
+// ===== HISTORY =====
+const HIST_KEY='dtc_recent';const HIST_LIM=50;
+function getRecent(){try{const h=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');return h.filter(i=>typeof i==='object'&&i.code)}catch{return[]}}
+function saveRecent(h){try{localStorage.setItem(HIST_KEY,JSON.stringify(h))}catch{}}
+function addRecent(code){
+  let h=getRecent();
+  const codeData=D.find(d=>d[0]===code);
+  const desc=codeData?codeData[3]:code;
+  h=h.filter(i=>i.code!==code);
+  h.unshift({code:code,desc:desc,time:Date.now()});
+  if(h.length>HIST_LIM)h=h.slice(0,HIST_LIM);
+  saveRecent(h);
+  updateHash(code);
+  renderRecent();
+}
+function deleteRecent(code,e){
+  e.stopPropagation();
+  let h=getRecent().filter(i=>i.code!==code);
+  saveRecent(h);
+  renderRecent();
+}
+function clearRecent(){
+  if(!confirm('Clear all recent lookups?'))return;
+  localStorage.removeItem(HIST_KEY);
+  renderRecent();
+}
+let recentFocusEl=null;
+function toggleRecent(){
+  const drawer=document.getElementById('recentDrawer');
+  const overlay=document.getElementById('recentOverlay');
+  drawer.classList.toggle('open');
+  overlay.classList.toggle('open');
+  const isOpen=drawer.classList.contains('open');
+  if(isOpen){recentFocusEl=document.activeElement;drawer.querySelector('.drawer-close').focus();document.body.style.overflow='hidden'}
+  else{document.body.style.overflow='';if(recentFocusEl)recentFocusEl.focus()}
+  if(!isOpen){document.getElementById('recentSearch').value='';renderRecent()}
+}
+function handleDrawerKeydown(e){
+  if(e.key!=='Tab')return;
+  const drawer=document.getElementById('recentDrawer');
+  if(!drawer.classList.contains('open'))return;
+  const focusable=drawer.querySelectorAll('button,input,[tabindex]:not([tabindex="-1"])');
+  const first=focusable[0],last=focusable[focusable.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+}
+document.getElementById('recentOverlay').addEventListener('click',toggleRecent);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('recentDrawer').classList.contains('open'))toggleRecent();handleDrawerKeydown(e)});
+function renderRecent(){
+  const h=getRecent();
+  const search=(document.getElementById('recentSearch')?.value||'').toUpperCase();
+  const countEl=document.getElementById('recentCount');
+  const list=document.getElementById('recentList');
+  countEl.textContent=h.length;
+  if(!h.length){
+    list.innerHTML=`<div class="recent-list-empty">No recent lookups — searched codes will appear here</div>`;
+    return;
+  }
+  const filtered=h.filter(i=>!search||i.code.includes(search)||i.desc.toUpperCase().includes(search));
+  if(!filtered.length){
+    list.innerHTML=`<div class="recent-list-empty">No matches found</div>`;
+    return;
+  }
+  let html='';
+  for(const item of filtered.slice(0,100)){
+    const cat=item.code[0].toLowerCase();
+    const date=new Date(item.time);
+    const dateStr=date.toLocaleDateString()+' '+date.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const shortDesc=item.desc.length>50?item.desc.substring(0,47)+'...':item.desc;
+    html+=`<div class="recent-item ${cat}" onclick="loadRecent('${item.code}')"><div class="recent-item-left"><div class="recent-item-code">${item.code}</div><div class="recent-item-desc">${shortDesc}</div></div><span class="recent-item-date">${dateStr}</span><button class="recent-item-del" onclick="deleteRecent('${item.code}',event)" title="Remove">✕</button></div>`;
+  }
+  if(filtered.length>100)html+=`<div class="recent-list-empty">${filtered.length-100} more — narrow your search</div>`;
+  list.innerHTML=html;
+}
+function loadRecent(code){
+  toggleRecent();
+  const s=document.getElementById('search');
+  s.value=code;
+  render();
+  addRecent(code);
+}
+
+function searchCode(code){const s=document.getElementById('search');s.value=code;render();setTimeout(()=>{const card=listEl.querySelector('.dtc-card[data-index="0"]');if(card&&!card.classList.contains('open'))card.classList.add('open')},0)}
+
+// ===== RENDER =====
+let activeCat='all';
+let lastSavedCode='';
+const searchEl=document.getElementById('search');
+const listEl=document.getElementById('dtcList');
+const cntEl=document.getElementById('cnt');
+const emptyEl=document.getElementById('empty');
+const multiHint=document.getElementById('multiHint');
+
+function loadFromHash(){
+  const hash=location.hash.replace(/^#/,'').toUpperCase().trim();
+  if(/^[PBCU]\d{4}$/.test(hash)){searchEl.value=hash;render()}
+}
+function updateHash(code){
+  history.replaceState(null,'',code?'#'+code:window.location.pathname);
+}
+window.addEventListener('hashchange',loadFromHash);
+
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array(m+1).fill(null).map(()=>Array(n+1).fill(0));
+  for(let i=0;i<=m;i++)dp[i][0]=i;
+  for(let j=0;j<=n;j++)dp[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function getRelatedCodes(){
+  const rel=new Set();
+  D.forEach(d=>{if(d[6])d[6].split('|').forEach(r=>rel.add(r))});
+  return rel;
+}
+
+let selectedIndex=-1;
+const relatedCodes=new Set(getRelatedCodes());
+
+function getRelatedCodesForQuery(q){
+  const found=new Set();
+  const qUpper=q.toUpperCase();
+  D.forEach(d=>{
+    const code=d[0].toLowerCase();
+    const sys=d[2].toLowerCase();
+    const desc=d[3].toLowerCase();
+    const fuzzyCode=levenshtein(qUpper,code)<=2;
+    const fuzzyDesc=levenshtein(q,desc)<=5;
+    if(code.includes(q)||sys.includes(q)||desc.includes(q)||fuzzyCode||fuzzyDesc){
+      if(d[6])d[6].split('|').forEach(r=>found.add(r));
+    }
+  });
+  return found;
+}
+
+function findSuggestion(q){
+  const qUpper=q.toUpperCase();
+  let best=null,bestDist=Infinity;
+  D.forEach(d=>{
+    const dist=levenshtein(qUpper,d[0]);
+    if(dist<=2&&dist<bestDist){bestDist=dist;best=d[0]}
+  });
+  return best;
+}
+
+function render(){
+  const raw=searchEl.value.toUpperCase().trim();
+  const rawLower=raw.toLowerCase();
+  const tokens=raw.split(/[\s,;]+/).filter(t=>/^[PBCU]\d{4}$/i.test(t));
+  const isMulti=tokens.length>1;
+  multiHint.classList.toggle('show',isMulti);
+
+  if(!raw){lastSavedCode='';selectedIndex=-1}
+  let f=D;
+  if(activeCat!=='all')f=f.filter(r=>r[0][0]===activeCat);
+
+  if(isMulti){
+    const set=new Set(tokens);
+    f=f.filter(r=>set.has(r[0]));
+  } else if(raw){
+    const partialMatch=/^[PBCU]\d{0,4}$/i.test(raw)&&raw.length>0&&raw.length<4;
+    if(partialMatch){
+      f=f.filter(r=>r[0].startsWith(raw)).sort((a,b)=>a[0].localeCompare(b[0]));
+    } else {
+      const related=getRelatedCodesForQuery(rawLower);
+      f=f.filter(r=>{
+        const code=r[0].toLowerCase();
+        const sys=r[2].toLowerCase();
+        const desc=r[3].toLowerCase();
+        const fuzzy=levenshtein(raw.toUpperCase(),code)<=2;
+        const fuzzySys=levenshtein(rawLower,sys)<=3;
+        const fuzzyDesc=levenshtein(rawLower,desc)<=5;
+        const hasRelated=related.has(r[0]);
+        return code.includes(rawLower)||sys.includes(rawLower)||desc.includes(rawLower)||fuzzy||fuzzySys||fuzzyDesc||hasRelated;
+      }).sort((a,b)=>{
+        const aExact=a[0].toLowerCase()===rawLower?-100:0;
+        const bExact=b[0].toLowerCase()===rawLower?-100:0;
+        const aStarts=a[0].toLowerCase().startsWith(rawLower)?-50:0;
+        const bStarts=b[0].toLowerCase().startsWith(rawLower)?-50:0;
+        const aRelated=related.has(a[0])?-30:0;
+        const bRelated=related.has(b[0])?-30:0;
+        const aDesc=a[3].toLowerCase().includes(rawLower)?-20:0;
+        const bDesc=b[3].toLowerCase().includes(rawLower)?-20:0;
+        const aDist=levenshtein(raw.toUpperCase(),a[0].toUpperCase());
+        const bDist=levenshtein(raw.toUpperCase(),b[0].toUpperCase());
+        const scoreA=aExact+aStarts+aRelated+aDesc;
+        const scoreB=bExact+bStarts+bRelated+bDesc;
+        if(scoreA!==scoreB)return scoreA-scoreB;
+        return aDist-bDist;
+      });
+    }
+  }
+
+  cntEl.textContent=f.length+' code'+(f.length!==1?'s':'');
+  if(!f.length){
+    const suggest=findSuggestion(raw);
+    let html='';
+    if(suggest)html+=`<div class="dtc-suggestion">Did you mean <span onclick="searchCode('${suggest}')">${suggest}</span>?</div>`;
+    listEl.innerHTML=html;
+    emptyEl.style.display=html?'':'';
+    selectedIndex=-1;
+    return;
+  }
+  emptyEl.style.display='none';
+
+  if(/^[PBCU]\d{4}$/i.test(raw)&&f.length>0&&f[0][0]!==lastSavedCode){lastSavedCode=f[0][0];addRecent(lastSavedCode)}
+  if(selectedIndex>=f.length)selectedIndex=f.length-1;
+
+  const lim=150;const show=f.slice(0,lim);
+  let h='';
+  for(let i=0;i<show.length;i++){
+    const [code,cat,sys,desc,sev,causes,related,techNote]=show[i];
+    const c=code[0].toLowerCase();
+    const hasCauses=causes&&causes.length>0;
+    const hasRelated=related&&related.length>0;
+    const hasTech=techNote&&techNote.length>0;
+    const hasDetail=hasCauses||hasRelated||hasTech;
+    const sevLabel=SEV_LABELS[sev]||'';
+
+    h+=`<div class="dtc-card${hasDetail?'':' no-expand'}${i===selectedIndex?' keyboard-focus':''}" data-index="${i}" ${hasDetail?'onclick="toggleDtc(this,event)"':''}>`;
+    h+=`<div class="dtc-card-main">`;
+    h+=`<div class="dtc-card-header"><span class="dtc-code ${c}">${code}</span><span class="dtc-badge ${c}">${sys}</span>`;
+    if(sev!==undefined)h+=`<span class="sev sev-${sev}">${sevLabel}</span>`;
+    h+=`<button class="dtc-copy" onclick="copyCode(this,'${code}',event)">Copy</button></div>`;
+    h+=`<div class="dtc-desc">${desc}</div>`;
+    if(hasDetail)h+=`<div class="dtc-expand-hint">▼</div>`;
+    h+=`</div>`;
+
+    if(hasDetail){
+      h+=`<div class="dtc-detail"><div class="dtc-detail-inner">`;
+      if(hasCauses){
+        h+=`<div class="dtc-causes"><div class="dtc-causes-label">Common Causes</div>`;
+        causes.split('|').forEach(cause=>{h+=`<div class="dtc-cause">${cause}</div>`});
+        h+=`</div>`;
+      }
+      if(hasTech){
+        h+=`<div class="dtc-tech"><div class="dtc-tech-label">Technical Explanation</div><div class="dtc-tech-note">${techNote}</div></div>`;
+      }
+      if(hasRelated){
+        h+=`<div class="dtc-related"><div class="dtc-related-label">Related Codes</div>`;
+        related.split('|').forEach(rc=>{h+=`<span class="dtc-related-code" data-code="${rc}" onclick="searchCode('${rc}')">${rc}</span>`});
+        h+=`</div>`;
+      }
+      h+=`</div></div>`;
+    }
+    h+=`</div>`;
+  }
+  if(f.length>lim)h+=`<div style="text-align:center;padding:24px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:13px">Showing first ${lim} of ${f.length} — narrow your search</div>`;
+  listEl.innerHTML=h;
+  document.querySelectorAll('.dtc-card.open').forEach(c=>c.classList.remove('open'));
+}
+
+function toggleDtc(card,e){if(e.target.classList.contains('dtc-copy')||e.target.classList.contains('dtc-related-code'))return;card.classList.toggle('open')}
+
+function copyCode(btn,code,e){
+  e.stopPropagation();
+  navigator.clipboard.writeText(code).then(()=>{btn.textContent='Copied!';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},1500)}).catch(()=>{btn.textContent='Failed';setTimeout(()=>btn.textContent='Copy',1500)});
+}
+
+function filt(v,btn){
+  activeCat=v;
+  document.querySelectorAll('.fbtn').forEach(b=>{b.className='fbtn';b.setAttribute('aria-pressed','false')});
+  btn.classList.add(v==='all'?'on':'on-'+v.toLowerCase());
+  btn.setAttribute('aria-pressed','true');
+  selectedIndex=-1;
+  render();
+}
+
+function debounce(fn, ms) {
+  let t;
+  return function(...a) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, a), ms);
+  };
+}
+
+searchEl.addEventListener('input',debounce(()=>render(),150));
+searchEl.addEventListener('keydown',(e)=>{
+  const cards=document.querySelectorAll('.dtc-card');
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    selectedIndex=Math.min(selectedIndex+1,cards.length-1);
+    cards.forEach((c,i)=>c.classList.toggle('keyboard-focus',i===selectedIndex));
+    if(cards[selectedIndex])cards[selectedIndex].scrollIntoView({behavior:'smooth',block:'nearest'});
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    selectedIndex=Math.max(selectedIndex-1,0);
+    cards.forEach((c,i)=>c.classList.toggle('keyboard-focus',i===selectedIndex));
+    if(cards[selectedIndex])cards[selectedIndex].scrollIntoView({behavior:'smooth',block:'nearest'});
+  } else if(e.key==='Enter'||e.key===' '){
+    if(cards[selectedIndex]&&cards[selectedIndex].classList.contains('dtc-card')){
+      e.preventDefault();
+      cards[selectedIndex].click();
+    }
+  } else if(e.key==='Escape'){
+    document.querySelectorAll('.dtc-card.open').forEach(c=>c.classList.remove('open'));
+  }
+});
+function init() {
+  filt('all', document.querySelector('[data-f="all"]'));
+  loadFromHash();
+  renderRecent();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+window.addEventListener('scroll',()=>{document.getElementById('topBtn').classList.toggle('visible',window.scrollY>300)},{passive:true});
+
+(function(){
+  const tooltip=document.getElementById('dtcTooltip');
+  document.addEventListener('mouseover',(e)=>{
+    const target=e.target.closest('.dtc-related-code');
+    if(!target)return;
+    const code=target.dataset.code;
+    const data=D.find(d=>d[0]===code);
+    if(!data)return;
+    tooltip.textContent=data[3];
+    tooltip.classList.add('visible');
+  });
+  document.addEventListener('mouseout',(e)=>{
+    if(e.target.closest('.dtc-related-code')){
+      tooltip.classList.remove('visible');
+    }
+  });
+  document.addEventListener('mousemove',(e)=>{
+    if(tooltip.classList.contains('visible')){
+      tooltip.style.left=e.clientX+15+'px';
+      tooltip.style.top=e.clientY+15+'px';
+    }
+  });
+})();
+</script>
+</body>
+</html>
