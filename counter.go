@@ -43,9 +43,21 @@ var countedVINs = make(map[string]bool)
 var importRunning bool
 
 func startScheduledImport() {
-	// Run once on startup (after a brief delay to let server fully start)
+	// Give the server a moment to finish starting up.
 	time.Sleep(10 * time.Second)
-	runScheduledImportOnce()
+
+	// Only run the full import on startup when the database is empty (fresh
+	// install). This keeps service restarts - e.g. auto-deploys - fast, since
+	// re-parsing every TSB file takes minutes. The daily 3AM refresh below
+	// still keeps the data current, and `counter import` forces one manually.
+	if n := tsbRowCount(); n == 0 {
+		log.Println("[Scheduler] TSB database empty; running initial import...")
+		runScheduledImportOnce()
+	} else if n > 0 {
+		log.Printf("[Scheduler] TSB database has %d rows; skipping startup import", n)
+	} else {
+		log.Println("[Scheduler] Could not read TSB row count; skipping startup import")
+	}
 
 	// Then check every hour
 	ticker := time.NewTicker(time.Hour)
@@ -59,6 +71,20 @@ func startScheduledImport() {
 			runScheduledImportOnce()
 		}
 	}
+}
+
+// tsbRowCount returns the number of rows in the tsbs table, or -1 if it
+// cannot be determined (e.g. the database is not open yet).
+func tsbRowCount() int {
+	if tsbDB == nil {
+		return -1
+	}
+	var n int
+	if err := tsbDB.QueryRow("SELECT COUNT(*) FROM tsbs").Scan(&n); err != nil {
+		log.Printf("[Scheduler] Failed to count TSB rows: %v", err)
+		return -1
+	}
+	return n
 }
 
 func runScheduledImportOnce() {
