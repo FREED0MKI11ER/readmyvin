@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#a855f7">
+<meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="VIN Decoder">
@@ -23,12 +24,12 @@
 <link rel="manifest" href="manifest.json?v=2">
 <link rel="stylesheet" href="scanner.css">
 <link rel="apple-touch-icon" href="icon-180x180.png">
-<title>VIN Decoder</title>
+<title>ReadMyVIN — Free VIN Decoder</title>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "VIN Decoder",
+  "name": "ReadMyVIN VIN Decoder",
   "description": "Free VIN decoder — decode vehicle info, check recalls, browse complaints, and view safety ratings using official NHTSA data.",
   "url": "https://readmyvin.com",
   "applicationCategory": "UtilityApplication",
@@ -46,12 +47,14 @@
 }
 </script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0c0f'/%3E%3Crect x='1' y='1' width='30' height='30' rx='5' fill='none' stroke='%23252a35' stroke-width='1'/%3E%3Ctext x='16' y='21' text-anchor='middle' font-family='monospace' font-weight='bold' font-size='12' fill='%23a855f7'%3EVIN%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://api.nhtsa.gov">
 <style>
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
   html{overflow-x:clip}
-  :root{--bg:#0a0c0f;--surface:#12151a;--surface2:#1a1e26;--border:#252a35;--border-glow:#2a3a4a;--text:#e0e4ec;--text-dim:#8b95a5;--text-muted:#5a6577;--accent:#a855f7;--accent-dim:#a855f730;--accent-glow:#a855f718;--warn:#f59e0b;--error:#ef4444;--success:#10b981;--blue:#3b82f6;--purple:#a855f7;--pink:#ec4899;--orange:#f97316}
+  :root{color-scheme:dark;--bg:#0a0c0f;--surface:#12151a;--surface2:#1a1e26;--border:#252a35;--border-glow:#2a3a4a;--text:#e0e4ec;--text-dim:#8b95a5;--text-muted:#75809a;--accent:#a855f7;--accent-dim:#a855f730;--accent-glow:#a855f718;--warn:#f59e0b;--error:#ef4444;--success:#10b981;--blue:#3b82f6;--purple:#a855f7;--pink:#ec4899;--orange:#f97316}
   body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
   body::before{content:'';position:fixed;inset:0;background:linear-gradient(var(--border)1px,transparent 1px),linear-gradient(90deg,var(--border)1px,transparent 1px);background-size:60px 60px;opacity:.15;pointer-events:none;z-index:0}
   body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,var(--accent-glow)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,#3b82f610 0%,transparent 50%);pointer-events:none;z-index:0}
@@ -60,6 +63,7 @@
   .offline-banner.show{display:block}
   @keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
   .header{text-align:center;margin-bottom:48px}
+  .header .brand{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;opacity:.9}
   .header h1{font-family:'Archivo Black',sans-serif;font-size:clamp(36px,6vw,56px);letter-spacing:-1px;line-height:1.1;background:linear-gradient(135deg,#fff 0%,#99a3b3 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
   .header p{color:var(--text-dim);margin-top:12px;font-size:16px;font-weight:300}
   .input-zone{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:32px;transition:border-color .3s;position:relative}
@@ -317,6 +321,10 @@
      .input-row input{width:100% !important;flex:none !important}
      .btn{width:100% !important;flex:none !important}
    }
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{transition:none!important;animation:none!important}
+    .spinner{animation:spin .8s linear infinite!important}
+  }
 </style>
 </head>
 <body>
@@ -324,6 +332,7 @@
 <div class="global-counter" id="globalCounter" title="Total unique VINs decoded globally">Unique VINs Decoded: <span class="count" id="globalCount">--</span></div>
 <div class="app">
   <div class="header">
+    <div class="brand">ReadMyVIN</div>
     <h1>VIN Decoder</h1>
     <p>Enter a VIN to decode vehicle info, recalls, complaints, and safety ratings</p>
   </div>
