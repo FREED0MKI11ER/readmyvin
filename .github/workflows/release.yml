@@ -29,6 +29,12 @@ jobs:
           go-version-file: go.mod
           cache: false
 
+      - name: Vet & test
+        run: |
+          set -euo pipefail
+          go vet ./...
+          go test ./...
+
       - name: Read VERSION
         id: ver
         run: |
@@ -63,7 +69,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${{ steps.ver.outputs.app }}"
-          ASSETS="index.html dtc.html scanner.js scanner.css sw.js manifest.json robots.txt sitemap.xml og-image.svg icon-180x180.png icon-192x192.png icon-512x512.png maintenance-data-v3.json"
+          ASSETS="index.html dtc.html scanner.js scanner.css sw.js manifest.json robots.txt sitemap.xml og-image.svg og-image.png icon-180x180.png icon-192x192.png icon-512x512.png maintenance-data-v3.json"
           mkdir -p pkg/updater
           cp dist/counter pkg/counter
           printf '%s\n' "$VERSION" > pkg/VERSION

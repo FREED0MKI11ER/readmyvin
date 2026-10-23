@@ -3,6 +3,8 @@ package main
 import (
 	"archive/zip"
 	"bufio"
+	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -10,13 +12,16 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
+	"unicode"
 
 	"github.com/klauspost/compress/gzhttp"
 	_ "modernc.org/sqlite"
@@ -87,6 +92,61 @@ func tsbRowCount() int {
 	return n
 }
 
+// tsbFtsReady reports whether the full-text index has been populated. Until
+// `counter reindex` has been run, search falls back to a LIKE scan.
+func tsbFtsReady() bool {
+	if tsbDB == nil {
+		return false
+	}
+	var n int
+	if err := tsbDB.QueryRow("SELECT COUNT(*) FROM tsbs_fts").Scan(&n); err != nil {
+		return false
+	}
+	return n > 0
+}
+
+// ftsMatchQuery turns free text into a safe FTS5 MATCH expression: each word
+// becomes a quoted prefix term, implicitly AND-combined
+// (e.g. "brake fail" -> "brake"* "fail"*).
+func ftsMatchQuery(search string) string {
+	fields := strings.FieldsFunc(search, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	parts := make([]string, 0, len(fields))
+	for _, f := range fields {
+		f = strings.ReplaceAll(f, `"`, "")
+		if f == "" {
+			continue
+		}
+		parts = append(parts, `"`+f+`"*`)
+	}
+	return strings.Join(parts, " ")
+}
+
+// runReindex builds the case-insensitive vehicle index and rebuilds the FTS
+// index. Run once after deploying this version: `counter reindex`.
+func runReindex() {
+	if err := initTSBDB(); err != nil {
+		log.Fatal("Failed to init TSB database:", err)
+	}
+	defer tsbDB.Close()
+
+	log.Println("Creating case-insensitive vehicle index (this can take a while)...")
+	start := time.Now()
+	if _, err := tsbDB.Exec(`CREATE INDEX IF NOT EXISTS idx_tsbs_vehicle_ci ON tsbs(make COLLATE NOCASE, model COLLATE NOCASE, year)`); err != nil {
+		log.Fatalf("index creation failed: %v", err)
+	}
+	log.Printf("Vehicle index ready (%s)", time.Since(start).Round(time.Second))
+
+	log.Println("Rebuilding full-text index (this can take a while)...")
+	start = time.Now()
+	if _, err := tsbDB.Exec(`INSERT INTO tsbs_fts(tsbs_fts) VALUES('rebuild')`); err != nil {
+		log.Fatalf("FTS rebuild failed: %v", err)
+	}
+	log.Printf("Full-text index ready (%s)", time.Since(start).Round(time.Second))
+	log.Println("Reindex complete.")
+}
+
 func runScheduledImportOnce() {
 	if importRunning {
 		log.Println("[Scheduler] Import already running, skipping")
@@ -109,7 +169,7 @@ func runScheduledImportOnce() {
 
 	os.MkdirAll(tsbDataDir, 0755)
 
-	files, err := fetchTSBFileList()
+	files, err := fetchTSBFileListCached()
 	if err != nil {
 		log.Printf("[Scheduler] Failed to fetch file list: %v", err)
 		return
@@ -144,6 +204,9 @@ func main() {
 		case "cleanup":
 			cleanupOldZips()
 			return
+		case "reindex":
+			runReindex()
+			return
 		}
 	}
 
@@ -175,8 +238,30 @@ func main() {
 	// Start scheduled TSB import (daily at 3AM)
 	go startScheduledImport()
 
-	log.Println("Server listening on :8097")
-	http.ListenAndServe(":8097", gzhttp.GzipHandler(http.DefaultServeMux))
+	srv := &http.Server{
+		Addr:              ":8097",
+		Handler:           gzhttp.GzipHandler(http.DefaultServeMux),
+		ReadHeaderTimeout: 15 * time.Second,
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		log.Println("Server listening on :8097")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Println("Shutting down...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Shutdown error: %v", err)
+	}
+	log.Println("Stopped.")
 }
 
 func initDB() error {
@@ -260,6 +345,16 @@ func initTSBDB() error {
 	CREATE INDEX IF NOT EXISTS idx_tsbs_vehicle ON tsbs(make, model, year);
 	CREATE INDEX IF NOT EXISTS idx_tsbs_make ON tsbs(make);
 	CREATE INDEX IF NOT EXISTS idx_tsbs_year ON tsbs(year);
+	CREATE TABLE IF NOT EXISTS tsb_import_log (
+		filename TEXT PRIMARY KEY,
+		sha256 TEXT,
+		bytes INTEGER,
+		imported_at TEXT DEFAULT CURRENT_TIMESTAMP
+	);
+	CREATE VIRTUAL TABLE IF NOT EXISTS tsbs_fts USING fts5(description, system, content='tsbs', content_rowid='id');
+	CREATE TRIGGER IF NOT EXISTS tsbs_ai AFTER INSERT ON tsbs BEGIN
+		INSERT INTO tsbs_fts(rowid, description, system) VALUES (new.id, new.description, new.system);
+	END;
 	`
 	_, err = tsbDB.Exec(schema)
 	return err
@@ -354,7 +449,7 @@ func runTSBImport(files []string) {
 	// If no files provided, fetch from NHTSA or use hardcoded list
 	if files == nil {
 		var err error
-		files, err = fetchTSBFileList()
+		files, err = fetchTSBFileListCached()
 		if err != nil {
 			log.Printf("Failed to fetch file list: %v", err)
 			log.Println("Using hardcoded file list as fallback")
@@ -401,7 +496,41 @@ func downloadAndProcess(filename string, forceRedownload bool) error {
 		log.Printf("Using cached %s", filename)
 	}
 
-	return processZip(zipPath)
+	sum, size, err := fileDigest(zipPath)
+	if err != nil {
+		return err
+	}
+
+	if !forceRedownload {
+		var prev string
+		if tsbDB.QueryRow("SELECT sha256 FROM tsb_import_log WHERE filename = ?", filename).Scan(&prev) == nil && prev == sum {
+			log.Printf("  %s unchanged (%d bytes, sha256 %s...); skipping", filename, size, sum[:12])
+			return nil
+		}
+	}
+
+	if err := processZip(zipPath); err != nil {
+		return err
+	}
+	if _, err := tsbDB.Exec("INSERT OR REPLACE INTO tsb_import_log (filename, sha256, bytes, imported_at) VALUES (?, ?, ?, ?)",
+		filename, sum, size, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		log.Printf("  Failed to record import log for %s: %v", filename, err)
+	}
+	return nil
+}
+
+func fileDigest(path string) (string, int64, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", 0, err
+	}
+	defer f.Close()
+	h := sha256.New()
+	n, err := io.Copy(h, f)
+	if err != nil {
+		return "", 0, err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), n, nil
 }
 
 // fetchTSBFileList discovers available TSBS files by testing which ones exist
@@ -467,6 +596,35 @@ func fetchTSBFileList() ([]string, error) {
 	}
 
 	sort.Strings(files)
+	return files, nil
+}
+
+// fetchTSBFileListCached reuses a discovery result for up to 24h so we don't
+// HEAD-probe every candidate filename on every import run.
+func fetchTSBFileListCached() ([]string, error) {
+	cachePath := filepath.Join(tsbDataDir, "filelist.json")
+	type fileListCache struct {
+		Updated time.Time `json:"updated"`
+		Files   []string  `json:"files"`
+	}
+
+	if data, err := os.ReadFile(cachePath); err == nil {
+		var c fileListCache
+		if json.Unmarshal(data, &c) == nil && len(c.Files) > 0 && time.Since(c.Updated) < 24*time.Hour {
+			log.Printf("[Discovery] using cached list (%d files, %s old)", len(c.Files), time.Since(c.Updated).Round(time.Minute))
+			return c.Files, nil
+		}
+	}
+
+	files, err := fetchTSBFileList()
+	if err != nil {
+		return nil, err
+	}
+
+	b, _ := json.Marshal(fileListCache{Updated: time.Now(), Files: files})
+	if err := os.WriteFile(cachePath, b, 0644); err != nil {
+		log.Printf("[Discovery] failed to cache file list: %v", err)
+	}
 	return files, nil
 }
 
@@ -878,34 +1036,49 @@ func tsbHandler(w http.ResponseWriter, r *http.Request) {
 		offsetInt = o
 	}
 
+	const selCols = `SELECT id, external_id, make, model, year, comm_date, system, description FROM tsbs`
+	vehicleWhere := `WHERE make = ? COLLATE NOCASE AND model = ? COLLATE NOCASE AND year = ?`
+
 	var query string
 	var args []interface{}
 	var countQuery string
 	var countArgs []interface{}
 
+	fts := ""
 	if search != "" {
+		fts = ftsMatchQuery(search)
+	}
+
+	switch {
+	case fts != "" && tsbFtsReady():
+		// Full-text search over description/system, joined to the vehicle filter.
+		query = `SELECT t.id, t.external_id, t.make, t.model, t.year, t.comm_date, t.system, t.description
+			FROM tsbs t
+			JOIN tsbs_fts ON tsbs_fts.rowid = t.id
+			WHERE t.make = ? COLLATE NOCASE AND t.model = ? COLLATE NOCASE AND t.year = ?
+			AND tsbs_fts MATCH ?
+			ORDER BY t.comm_date DESC
+			LIMIT ? OFFSET ?`
+		args = []interface{}{make, model, yearInt, fts, limitInt, offsetInt}
+		countQuery = `SELECT COUNT(*) FROM tsbs t JOIN tsbs_fts ON tsbs_fts.rowid = t.id
+			WHERE t.make = ? COLLATE NOCASE AND t.model = ? COLLATE NOCASE AND t.year = ? AND tsbs_fts MATCH ?`
+		countArgs = []interface{}{make, model, yearInt, fts}
+	case search != "":
+		// FTS index not built yet - fall back to a LIKE scan.
 		searchTerm := "%" + search + "%"
-		query = `
-			SELECT id, external_id, make, model, year, comm_date, system, description
-			FROM tsbs
-			WHERE LOWER(make) = LOWER(?) AND LOWER(model) = LOWER(?) AND year = ?
-			AND (LOWER(description) LIKE LOWER(?) OR LOWER(system) LIKE LOWER(?))
+		query = selCols + ` ` + vehicleWhere + `
+			AND (description LIKE ? OR system LIKE ?)
 			ORDER BY comm_date DESC
-			LIMIT ? OFFSET ?
-		`
+			LIMIT ? OFFSET ?`
 		args = []interface{}{make, model, yearInt, searchTerm, searchTerm, limitInt, offsetInt}
-		countQuery = `SELECT COUNT(*) FROM tsbs WHERE LOWER(make) = LOWER(?) AND LOWER(model) = LOWER(?) AND year = ? AND (LOWER(description) LIKE LOWER(?) OR LOWER(system) LIKE LOWER(?))`
+		countQuery = `SELECT COUNT(*) FROM tsbs ` + vehicleWhere + ` AND (description LIKE ? OR system LIKE ?)`
 		countArgs = []interface{}{make, model, yearInt, searchTerm, searchTerm}
-	} else {
-		query = `
-			SELECT id, external_id, make, model, year, comm_date, system, description
-			FROM tsbs
-			WHERE LOWER(make) = LOWER(?) AND LOWER(model) = LOWER(?) AND year = ?
+	default:
+		query = selCols + ` ` + vehicleWhere + `
 			ORDER BY comm_date DESC
-			LIMIT ? OFFSET ?
-		`
+			LIMIT ? OFFSET ?`
 		args = []interface{}{make, model, yearInt, limitInt, offsetInt}
-		countQuery = `SELECT COUNT(*) FROM tsbs WHERE LOWER(make) = LOWER(?) AND LOWER(model) = LOWER(?) AND year = ?`
+		countQuery = `SELECT COUNT(*) FROM tsbs ` + vehicleWhere
 		countArgs = []interface{}{make, model, yearInt}
 	}
 

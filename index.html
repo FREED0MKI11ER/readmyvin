@@ -13,7 +13,12 @@
 <meta property="og:description" content="Decode any VIN instantly. Get vehicle specs, safety ratings, recalls, and complaints from official NHTSA data. 100% free, no sign-up required.">
 <meta property="og:url" content="https://readmyvin.com">
 <meta property="og:site_name" content="ReadMyVIN">
-<meta property="og:image" content="https://readmyvin.com/og-image.svg">
+<meta property="og:image" content="https://readmyvin.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VIN Decoder - Free Vehicle History &amp; Recall Lookup">
+<meta name="twitter:description" content="Decode any VIN instantly. Get vehicle specs, safety ratings, recalls, and complaints from official NHTSA data.">
+<meta name="twitter:image" content="https://readmyvin.com/og-image.png">
+<link rel="canonical" href="https://readmyvin.com/">
 
 <link rel="manifest" href="manifest.json?v=2">
 <link rel="stylesheet" href="scanner.css">
@@ -1429,6 +1434,7 @@ let counterFailCount = 0;
 
 function updateGlobalCounter(){
   if(counterUpdating) return;
+  if(document.hidden) return;
   counterUpdating = true;
   fetch('/counter',{signal:AbortSignal.timeout(5000)}).then(r=>r.json()).then(d=>{
     counterFailCount=0;
@@ -1444,7 +1450,8 @@ function updateGlobalCounter(){
   }).finally(()=>{counterUpdating=false})
 }
 
-setInterval(updateGlobalCounter, 5000);
+setInterval(updateGlobalCounter, 30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden) updateGlobalCounter()});
 
 async function incrementGlobalCounter(vin){
   if(counterIncrementing) return;

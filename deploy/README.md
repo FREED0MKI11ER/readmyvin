@@ -76,3 +76,17 @@ journalctl -u vindecoder.service -n 50 --no-pager
 curl -s localhost:8097/api/version
 systemctl list-timers readmyvin-update.timer
 ```
+
+## One-time reindex (v1.2.2+)
+
+TSB search uses a case-insensitive vehicle index plus an FTS5 full-text index,
+built lazily. After the first deploy of v1.2.2+, run this **once** (it takes a
+few minutes and adds disk usage to `tsb.db`):
+
+```bash
+cd /var/www/vindecoder
+./counter reindex
+```
+
+Until it finishes, search falls back to the old `LIKE` scan. New TSB rows are
+kept in the FTS index automatically afterwards (via a trigger).
