@@ -31,7 +31,7 @@ Browser ──► Caddy (readmyvin.com, TLS)
 | GET/POST | `/counter` | Global decode counter (POST body `{"vinHash":"..."}`) |
 | GET | `/api/tsbs` | TSB search: `?make=&model=&year=&max=&offset=&search=` |
 | GET | `/api/decode-vin` | vPIC proxy with local cache: `?vin=` |
-| GET | `/api/version` | Build version (stamped by CI) |
+| GET | `/api/version` | App version (from `VERSION`) |
 
 ## Repo layout
 
@@ -46,14 +46,24 @@ deploy/                     server units + auto-updater (see deploy/README.md)
 .github/workflows/release.yml
 ```
 
+## Versioning & releasing
+
+The version is the single line in [`VERSION`](VERSION) (semver, e.g. `1.2.1`).
+It is stamped into the footer badge, the service-worker cache name, and the Go
+binary (`/api/version`).
+
+**To release:** bump `VERSION`, commit, push to `main`. That's it — deploys are
+driven by the version, so a push without a bump will not roll out.
+
 ## Deployment (automated)
 
-Push to `main` → GitHub Actions builds the Linux `counter` binary and
-(re)publishes the rolling **`latest`** release with
-`vindecoder-linux-amd64.tar.gz` + `SHA256SUMS.txt`. The server polls that
-release every 10 minutes (`readmyvin-update.timer`), verifies the SHA-256,
-installs the binary + static assets, restarts `vindecoder.service`, and rolls
-back if the health check fails.
+Bump `VERSION` and push to `main` → GitHub Actions builds the Linux `counter`
+binary, bundles it with the static assets + the updater, and publishes a release
+tagged `v<VERSION>` (e.g. `v1.2.1`) with `vindecoder-linux-amd64.tar.gz` +
+`SHA256SUMS.txt`. The server polls the latest release every 10 minutes
+(`readmyvin-update.timer`), verifies the SHA-256, installs the binary + static
+assets, restarts `vindecoder.service`, rolls back if the health check fails, and
+**self-updates the updater** (script + units) when they change.
 
 Runtime data (`tsb.db`, `counted_vins.db`, `vpic_cache.db`, `counter.txt`,
 `tsb_data/`, logs) lives in `/var/www/vindecoder` and is never part of the

@@ -31,6 +31,12 @@ This installs `readmyvin-update.sh` to `/usr/local/bin`, the `.service`/`.timer`
 units, writes `/etc/default/readmyvin-update` (edit if your names/paths differ),
 enables the timer, and runs one update immediately.
 
+> **Self-updating.** The release bundle ships the updater script + units, so once
+> this version is installed, future changes to them roll out automatically (the
+> running script replaces itself; the new logic applies on the next tick). The
+> very first switch to a self-updating updater requires one manual `install.sh`
+> run, since the previously installed script has no self-replace code.
+
 Config lives in `/etc/default/readmyvin-update`:
 
 | Variable | Meaning | Default |
@@ -40,17 +46,23 @@ Config lives in `/etc/default/readmyvin-update`:
 | `READMYVIN_SERVICE` | systemd unit to restart | `vindecoder` |
 | `READMYVIN_BINARY` | Binary filename in the webroot | `counter` |
 | `READMYVIN_HEALTH_URL` | Post-deploy health check | `http://127.0.0.1:8097/counter` |
+| `READMYVIN_STATE` | File recording the deployed tag | `/var/lib/readmyvin/deployed.version` |
 
 ## How updates flow
 
 ```
-push to main -> GitHub Actions builds `counter` + publishes "latest" release
-             -> readmyvin-update.timer polls every 10 min
-             -> downloads bundle, verifies SHA-256
-             -> backs up current binary + static files
-             -> installs files + swaps binary
-             -> restarts $READMYVIN_SERVICE, health-checks, rolls back on failure
+bump VERSION + push to main
+   -> GitHub Actions builds `counter` + publishes release tagged v<VERSION> (e.g. v1.2.1)
+   -> readmyvin-update.timer polls every 10 min
+   -> compares the release tag to /var/lib/readmyvin/deployed.version
+   -> downloads bundle, verifies SHA-256
+   -> backs up current binary + static files
+   -> installs files + swaps binary
+   -> restarts $READMYVIN_SERVICE, health-checks, rolls back on failure
+   -> optionally self-updates the updater script + units
 ```
+
+Deploys are **version-driven**: bumping `VERSION` is what triggers a rollout.
 
 Runtime data (`tsb.db`, `counted_vins.db`, `vpic_cache.db`, `counter.txt`,
 `tsb_data/`, logs) is never touched. Backups are kept in

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 #
 # readmyvin-update.sh
-# Polls the latest GitHub release and deploys it if the published artifact changed.
+# Polls the latest GitHub release and deploys it if the release tag changed.
 # Intended to be run by readmyvin-update.timer (systemd) every 10 minutes, as root.
 #
 # It only ever touches the Go binary + the static asset list shipped inside the
-# release bundle. Runtime data (databases, counter.txt, logs, tsb_data/) is never
-# modified. On a failed health check the previous files are restored automatically.
+# release bundle, plus this script and its systemd units (self-update). Runtime
+# data (databases, counter.txt, logs, tsb_data/) is never modified. On a failed
+# health check the previous files are restored automatically.
 #
 set -euo pipefail
 
@@ -15,8 +16,10 @@ WEBROOT="${READMYVIN_WEBROOT:-/var/www/vindecoder}"
 SERVICE="${READMYVIN_SERVICE:-vindecoder}"       # systemd unit to restart
 BINARY="${READMYVIN_BINARY:-counter}"           # deployed binary filename in $WEBROOT
 HEALTH_URL="${READMYVIN_HEALTH_URL:-http://127.0.0.1:8097/counter}"
-STATE="${READMYVIN_STATE:-/var/lib/readmyvin/deployed.sha256}"
+STATE="${READMYVIN_STATE:-/var/lib/readmyvin/deployed.version}"
 BACKUP_ROOT="${READMYVIN_BACKUP_DIR:-/var/lib/readmyvin/backups}"
+SELF_PATH="${READMYVIN_SELF:-/usr/local/bin/readmyvin-update.sh}"
+UNIT_DIR="/etc/systemd/system"
 KEEP_BACKUPS=5
 
 ASSET="vindecoder-linux-amd64.tar.gz"
@@ -41,24 +44,24 @@ tag="$(printf '%s' "$release_json" | grep -o '"tag_name": *"[^"]*"' | head -1 | 
 asset_url="$(printf '%s' "$release_json" | grep '"browser_download_url"' | grep "$ASSET" | head -1 | cut -d'"' -f4)"
 sums_url="$(printf '%s' "$release_json" | grep '"browser_download_url"' | grep "$SUMS" | head -1 | cut -d'"' -f4)"
 
-if [ -z "$asset_url" ] || [ -z "$sums_url" ]; then
-  log "release has no $ASSET / $SUMS yet; nothing to do"
+if [ -z "$tag" ] || [ -z "$asset_url" ] || [ -z "$sums_url" ]; then
+  log "release has no tag / $ASSET / $SUMS yet; nothing to do"
   exit 0
 fi
 
-# --- 2) compare against what is deployed -----------------------------------
-curl -fsSL "$sums_url" -o "$tmp/$SUMS"
-expected="$(grep " $ASSET\$" "$tmp/$SUMS" | awk '{print $1}' | head -1)"
-[ -n "$expected" ] || { log "no checksum listed for $ASSET"; exit 1; }
-
+# --- 2) compare release tag against what is deployed -----------------------
 current="$(cat "$STATE" 2>/dev/null || true)"
-if [ "$expected" = "$current" ]; then
+if [ "$tag" = "$current" ]; then
   log "already up to date ($tag)"
   exit 0
 fi
 log "update available: $tag"
 
 # --- 3) download + verify ---------------------------------------------------
+curl -fsSL "$sums_url" -o "$tmp/$SUMS"
+expected="$(grep " $ASSET\$" "$tmp/$SUMS" | awk '{print $1}' | head -1)"
+[ -n "$expected" ] || { log "no checksum listed for $ASSET"; exit 1; }
+
 curl -fsSL "$asset_url" -o "$tmp/$ASSET"
 actual="$(sha256sum "$tmp/$ASSET" | awk '{print $1}')"
 if [ "$actual" != "$expected" ]; then
@@ -114,8 +117,37 @@ if ! curl -fsS --max-time 10 "$HEALTH_URL" >/dev/null 2>&1; then
   exit 1
 fi
 
-# --- 9) record success + prune old backups ---------------------------------
-printf '%s\n' "$expected" > "$STATE"
+# --- 9) record success ------------------------------------------------------
+printf '%s\n' "$tag" > "$STATE"
 log "deployed $tag successfully"
 
+# --- 10) self-update the updater script + systemd units --------------------
+bundle_updater="$tmp/pkg/updater/readmyvin-update.sh"
+if [ -f "$bundle_updater" ] && [ -f "$SELF_PATH" ] && ! cmp -s "$bundle_updater" "$SELF_PATH"; then
+  if bash -n "$bundle_updater"; then
+    cp -a "$SELF_PATH" "$backup/readmyvin-update.sh"
+    install -m 0755 "$bundle_updater" "$SELF_PATH"
+    log "updater script updated (takes effect next run)"
+  else
+    log "new updater failed syntax check; keeping current version"
+  fi
+fi
+
+units_changed=0
+for u in readmyvin-update.service readmyvin-update.timer; do
+  src="$tmp/pkg/updater/$u"
+  dst="$UNIT_DIR/$u"
+  if [ -f "$src" ] && { [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; }; then
+    [ -f "$dst" ] && cp -a "$dst" "$backup/$u"
+    install -m 0644 "$src" "$dst"
+    log "updated unit $u"
+    units_changed=1
+  fi
+done
+if [ "$units_changed" = 1 ]; then
+  systemctl daemon-reload
+  log "systemd reloaded"
+fi
+
+# --- 11) prune old backups --------------------------------------------------
 ls -1dt "$BACKUP_ROOT"/*/ 2>/dev/null | tail -n +$((KEEP_BACKUPS + 1)) | xargs -r rm -rf
