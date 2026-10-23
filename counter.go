@@ -147,6 +147,142 @@ func runReindex() {
 	log.Println("Reindex complete.")
 }
 
+var reSupersedes = regexp.MustCompile(`(?i)\bsupersed(?:e|es|ing)\b[^0-9A-Za-z]{0,4}(?:tsb|pi|pic|pip|bulletin|document|article|#|no\.?|number)?[^0-9A-Za-z]{0,4}([A-Z0-9][A-Z0-9\-\/\.\(\)]{1,20})`)
+var reSupersededBy = regexp.MustCompile(`(?i)\bsuperseded\s+by\b[^0-9A-Za-z]{0,4}(?:tsb|pi|pic|pip|bulletin|document|article|#|no\.?|number)?[^0-9A-Za-z]{0,4}([A-Z0-9][A-Z0-9\-\/\.\(\)]{1,20})`)
+
+func normalizeDocNum(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.Trim(s, ".,:;#*/() ")
+	return strings.ToUpper(s)
+}
+
+// supersedeRefs extracts the document numbers a description references:
+// numbers this bulletin supersedes, and the number that supersedes it.
+func supersedeRefs(desc string) (supersedes []string, supersededBy string) {
+	for _, m := range reSupersedes.FindAllStringSubmatch(desc, -1) {
+		if n := normalizeDocNum(m[1]); n != "" {
+			supersedes = append(supersedes, n)
+		}
+	}
+	if m := reSupersededBy.FindStringSubmatch(desc); m != nil {
+		supersededBy = normalizeDocNum(m[1])
+	}
+	return supersedes, supersededBy
+}
+
+// runSupersession marks bulletins that are superseded by a newer one, plus
+// older reissues that share a tsb_number with a newer row.
+func runSupersession() {
+	log.Println("[Supersede] Building supporting index...")
+	if _, err := tsbDB.Exec(`CREATE INDEX IF NOT EXISTS idx_tsbs_make_doc ON tsbs(make, tsb_number)`); err != nil {
+		log.Printf("[Supersede] index failed: %v", err)
+	}
+
+	log.Println("[Supersede] Scanning descriptions for superseded references...")
+	rows, err := tsbDB.Query(`SELECT id, make, tsb_number, description FROM tsbs WHERE description LIKE '%supersed%'`)
+	if err != nil {
+		log.Printf("[Supersede] query failed: %v", err)
+		return
+	}
+	type ref struct{ make, num, by string }
+	var refs []ref
+	for rows.Next() {
+		var id int
+		var make, num, desc string
+		if err := rows.Scan(&id, &make, &num, &desc); err != nil {
+			continue
+		}
+		supersedes, supersededBy := supersedeRefs(desc)
+		for _, refNum := range supersedes {
+			refs = append(refs, ref{make: make, num: refNum, by: num})
+		}
+		if supersededBy != "" {
+			refs = append(refs, ref{make: make, num: num, by: supersededBy})
+		}
+	}
+	rows.Close()
+
+	log.Printf("[Supersede] Applying %d reference(s)...", len(refs))
+	updated := 0
+	for _, r := range refs {
+		if r.num == "" {
+			continue
+		}
+		res, err := tsbDB.Exec(`UPDATE tsbs SET superseded = 1, superseded_by = ? WHERE make = ? AND tsb_number = ? AND superseded = 0 AND tsb_number != ''`,
+			r.by, r.make, r.num)
+		if err == nil {
+			if n, _ := res.RowsAffected(); n > 0 {
+				updated += int(n)
+			}
+		}
+	}
+	log.Printf("[Supersede] Marked %d row(s) as superseded by reference.", updated)
+
+	// Collapse older reissues: within the same make/model/year/tsb_number keep
+	// only the newest comm_date.
+	log.Println("[Supersede] Collapsing reissued duplicates...")
+	res, err := tsbDB.Exec(`
+		UPDATE tsbs SET superseded = 1
+		WHERE superseded = 0 AND tsb_number != '' AND id IN (
+			SELECT id FROM (
+				SELECT id, ROW_NUMBER() OVER (
+					PARTITION BY make, model, year, tsb_number ORDER BY comm_date DESC
+				) AS rn
+				FROM tsbs WHERE tsb_number != ''
+			) WHERE rn > 1
+		)`)
+	if err != nil {
+		log.Printf("[Supersede] collapse failed: %v", err)
+		return
+	}
+	if n, _ := res.RowsAffected(); n > 0 {
+		log.Printf("[Supersede] Marked %d reissued row(s) as superseded.", n)
+	}
+}
+
+// runRebuild performs the full accuracy migration: re-download every TSBS file
+// (populating tsb_number/tsb_type/doc_date), detect supersession, build
+// indexes, and rebuild the full-text index. Run once: `counter rebuild`.
+func runRebuild() {
+	if err := initTSBDB(); err != nil {
+		log.Fatal("Failed to init TSB database:", err)
+	}
+	defer tsbDB.Close()
+
+	log.Println("Re-downloading and reprocessing all TSBS files...")
+	os.MkdirAll(tsbDataDir, 0755)
+	files, err := fetchTSBFileList()
+	if err != nil {
+		log.Printf("Failed to fetch file list: %v", err)
+		return
+	}
+	for _, file := range files {
+		log.Printf("Processing %s...", file)
+		if err := downloadAndProcess(file, true); err != nil {
+			log.Printf("Error processing %s: %v", file, err)
+		}
+	}
+	cleanupOldZips()
+
+	runSupersession()
+
+	log.Println("Creating indexes...")
+	if _, err := tsbDB.Exec(`CREATE INDEX IF NOT EXISTS idx_tsbs_doc ON tsbs(make, model, year, tsb_number)`); err != nil {
+		log.Printf("index failed: %v", err)
+	}
+	if _, err := tsbDB.Exec(`CREATE INDEX IF NOT EXISTS idx_tsbs_vehicle_ci ON tsbs(make COLLATE NOCASE, model COLLATE NOCASE, year)`); err != nil {
+		log.Printf("index failed: %v", err)
+	}
+
+	log.Println("Rebuilding full-text index (this can take a while)...")
+	start := time.Now()
+	if _, err := tsbDB.Exec(`INSERT INTO tsbs_fts(tsbs_fts) VALUES('rebuild')`); err != nil {
+		log.Fatalf("FTS rebuild failed: %v", err)
+	}
+	log.Printf("Full-text index ready (%s)", time.Since(start).Round(time.Second))
+	log.Println("Rebuild complete.")
+}
+
 func runScheduledImportOnce() {
 	if importRunning {
 		log.Println("[Scheduler] Import already running, skipping")
@@ -206,6 +342,9 @@ func main() {
 			return
 		case "reindex":
 			runReindex()
+			return
+		case "rebuild":
+			runRebuild()
 			return
 		}
 	}
@@ -357,7 +496,50 @@ func initTSBDB() error {
 	END;
 	`
 	_, err = tsbDB.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+	ensureTSBColumns()
+	return nil
+}
+
+// ensureTSBColumns adds the accuracy columns to an existing tsbs table.
+// ALTER TABLE ADD COLUMN is cheap (metadata only), so this is safe to run at
+// every startup.
+func ensureTSBColumns() {
+	want := []struct{ name, typ string }{
+		{"tsb_number", "TEXT"},
+		{"tsb_type", "TEXT"},
+		{"doc_date", "TEXT"},
+		{"superseded", "INTEGER NOT NULL DEFAULT 0"},
+		{"superseded_by", "TEXT"},
+	}
+	existing := map[string]bool{}
+	rows, err := tsbDB.Query("PRAGMA table_info(tsbs)")
+	if err != nil {
+		log.Printf("[Schema] table_info failed: %v", err)
+		return
+	}
+	for rows.Next() {
+		var cid, notnull, pk int
+		var name, ctype string
+		var dflt sql.NullString
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err == nil {
+			existing[name] = true
+		}
+	}
+	rows.Close()
+
+	for _, c := range want {
+		if existing[c.name] {
+			continue
+		}
+		if _, err := tsbDB.Exec(fmt.Sprintf("ALTER TABLE tsbs ADD COLUMN %s %s", c.name, c.typ)); err != nil {
+			log.Printf("[Schema] failed to add column %s: %v", c.name, err)
+		} else {
+			log.Printf("[Schema] added tsbs column %s", c.name)
+		}
+	}
 }
 
 func versionHandler(w http.ResponseWriter, r *http.Request) {
@@ -788,8 +970,12 @@ func processRecords(records [][]string, headers map[string]int) {
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(`
-		INSERT OR IGNORE INTO tsbs (external_id, make, model, year, comm_date, system, description)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO tsbs (external_id, make, model, year, comm_date, system, description, tsb_number, tsb_type, doc_date)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(external_id, make, model, year) DO UPDATE SET
+			tsb_number = CASE WHEN excluded.tsb_number != '' THEN excluded.tsb_number ELSE tsbs.tsb_number END,
+			tsb_type   = CASE WHEN excluded.tsb_type   != '' THEN excluded.tsb_type   ELSE tsbs.tsb_type   END,
+			doc_date   = CASE WHEN excluded.doc_date   != '' THEN excluded.doc_date   ELSE tsbs.doc_date   END
 	`)
 	if err != nil {
 		log.Printf("    Error preparing statement: %v", err)
@@ -834,7 +1020,7 @@ func processRecords(records [][]string, headers map[string]int) {
 			continue
 		}
 
-		_, err := stmt.Exec(extID, make, model, year, commDate, desc)
+		_, err := stmt.Exec(extID, make, model, year, commDate, "", desc, extID, "", commDate)
 		if err == nil {
 			count++
 		}
@@ -859,8 +1045,13 @@ func processRecordsPositional(records [][]string) {
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(`
-		INSERT OR IGNORE INTO tsbs (external_id, make, model, year, comm_date, system, description)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO tsbs (external_id, make, model, year, comm_date, system, description, tsb_number, tsb_type, doc_date)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(external_id, make, model, year) DO UPDATE SET
+			tsb_number = CASE WHEN excluded.tsb_number != '' THEN excluded.tsb_number ELSE tsbs.tsb_number END,
+			tsb_type   = CASE WHEN excluded.tsb_type   != '' THEN excluded.tsb_type   ELSE tsbs.tsb_type   END,
+			doc_date   = CASE WHEN excluded.doc_date   != '' THEN excluded.doc_date   ELSE tsbs.doc_date   END,
+			system     = CASE WHEN (tsbs.system IS NULL OR tsbs.system = '') AND excluded.system != '' THEN excluded.system ELSE tsbs.system END
 	`)
 	if err != nil {
 		log.Printf("    [Positional] Error preparing statement: %v", err)
@@ -880,6 +1071,19 @@ func processRecordsPositional(records [][]string) {
 		extID := cleanValue(row[0])
 		make := cleanValue(row[7])
 		model := cleanValue(row[8])
+
+		tsbNumber := ""
+		if len(row) > 3 {
+			tsbNumber = cleanValue(row[3])
+		}
+		docDate := ""
+		if len(row) > 4 {
+			docDate = cleanDate(row[4])
+		}
+		tsbType := ""
+		if len(row) > 6 {
+			tsbType = cleanValue(row[6])
+		}
 
 		year := 0
 		if len(row) > 9 {
@@ -907,7 +1111,7 @@ func processRecordsPositional(records [][]string) {
 			continue
 		}
 
-		_, err := stmt.Exec(extID, make, model, year, commDate, system, desc)
+		_, err := stmt.Exec(extID, make, model, year, commDate, system, desc, tsbNumber, tsbType, docDate)
 		if err == nil {
 			count++
 		}
@@ -994,6 +1198,9 @@ type TSB struct {
 	CommDate    string `json:"comm_date"`
 	System      string `json:"system"`
 	Description string `json:"description"`
+	TsbNumber   string `json:"tsb_number"`
+	TsbType     string `json:"tsb_type"`
+	Superseded  int    `json:"superseded"`
 }
 
 func tsbHandler(w http.ResponseWriter, r *http.Request) {
@@ -1036,51 +1243,52 @@ func tsbHandler(w http.ResponseWriter, r *http.Request) {
 		offsetInt = o
 	}
 
-	const selCols = `SELECT id, external_id, make, model, year, comm_date, system, description FROM tsbs`
-	vehicleWhere := `WHERE make = ? COLLATE NOCASE AND model = ? COLLATE NOCASE AND year = ?`
-
-	var query string
-	var args []interface{}
-	var countQuery string
-	var countArgs []interface{}
+	includeSuperseded := false
+	switch strings.ToLower(r.URL.Query().Get("include_superseded")) {
+	case "1", "true", "yes":
+		includeSuperseded = true
+	}
 
 	fts := ""
 	if search != "" {
 		fts = ftsMatchQuery(search)
 	}
+	useFts := fts != "" && tsbFtsReady()
 
-	switch {
-	case fts != "" && tsbFtsReady():
-		// Full-text search over description/system, joined to the vehicle filter.
-		query = `SELECT t.id, t.external_id, t.make, t.model, t.year, t.comm_date, t.system, t.description
-			FROM tsbs t
-			JOIN tsbs_fts ON tsbs_fts.rowid = t.id
-			WHERE t.make = ? COLLATE NOCASE AND t.model = ? COLLATE NOCASE AND t.year = ?
-			AND tsbs_fts MATCH ?
-			ORDER BY t.comm_date DESC
-			LIMIT ? OFFSET ?`
-		args = []interface{}{make, model, yearInt, fts, limitInt, offsetInt}
-		countQuery = `SELECT COUNT(*) FROM tsbs t JOIN tsbs_fts ON tsbs_fts.rowid = t.id
-			WHERE t.make = ? COLLATE NOCASE AND t.model = ? COLLATE NOCASE AND t.year = ? AND tsbs_fts MATCH ?`
-		countArgs = []interface{}{make, model, yearInt, fts}
-	case search != "":
-		// FTS index not built yet - fall back to a LIKE scan.
-		searchTerm := "%" + search + "%"
-		query = selCols + ` ` + vehicleWhere + `
-			AND (description LIKE ? OR system LIKE ?)
-			ORDER BY comm_date DESC
-			LIMIT ? OFFSET ?`
-		args = []interface{}{make, model, yearInt, searchTerm, searchTerm, limitInt, offsetInt}
-		countQuery = `SELECT COUNT(*) FROM tsbs ` + vehicleWhere + ` AND (description LIKE ? OR system LIKE ?)`
-		countArgs = []interface{}{make, model, yearInt, searchTerm, searchTerm}
-	default:
-		query = selCols + ` ` + vehicleWhere + `
-			ORDER BY comm_date DESC
-			LIMIT ? OFFSET ?`
-		args = []interface{}{make, model, yearInt, limitInt, offsetInt}
-		countQuery = `SELECT COUNT(*) FROM tsbs ` + vehicleWhere
-		countArgs = []interface{}{make, model, yearInt}
+	const groupKey = `COALESCE(NULLIF(t.tsb_number, ''), t.external_id)`
+	const innerCols = `t.id, t.external_id, t.make, t.model, t.year, COALESCE(t.comm_date, '') AS comm_date, COALESCE(t.system, '') AS system, COALESCE(t.description, '') AS description, COALESCE(t.tsb_number, '') AS tsb_number, COALESCE(t.tsb_type, '') AS tsb_type, t.superseded`
+	const outerCols = `id, external_id, make, model, year, comm_date, system, description, tsb_number, tsb_type, superseded`
+
+	buildCore := func() (string, []interface{}) {
+		var a []interface{}
+		core := "FROM tsbs t"
+		if useFts {
+			core += " JOIN tsbs_fts ON tsbs_fts.rowid = t.id"
+		}
+		core += " WHERE t.make = ? COLLATE NOCASE AND t.model = ? COLLATE NOCASE AND t.year = ?"
+		a = append(a, make, model, yearInt)
+		if !includeSuperseded {
+			core += " AND t.superseded = 0"
+		}
+		if useFts {
+			core += " AND tsbs_fts MATCH ?"
+			a = append(a, fts)
+		} else if search != "" {
+			core += " AND (t.description LIKE ? OR t.system LIKE ?)"
+			a = append(a, "%"+search+"%", "%"+search+"%")
+		}
+		return core, a
 	}
+
+	core, coreArgs := buildCore()
+
+	// One row per bulletin (dedupe by tsb_number), newest first.
+	query := "WITH base AS (SELECT " + innerCols + ", ROW_NUMBER() OVER (PARTITION BY " + groupKey + " ORDER BY t.comm_date DESC) AS rn " + core + ") " +
+		"SELECT " + outerCols + " FROM base WHERE rn = 1 ORDER BY comm_date DESC LIMIT ? OFFSET ?"
+	args := append(append([]interface{}{}, coreArgs...), limitInt, offsetInt)
+
+	countQuery := "WITH base AS (SELECT " + groupKey + " AS gk, ROW_NUMBER() OVER (PARTITION BY " + groupKey + " ORDER BY t.comm_date DESC) AS rn " + core + ") SELECT COUNT(*) FROM base WHERE rn = 1"
+	countArgs := coreArgs
 
 	rows, err := tsbDB.Query(query, args...)
 	if err != nil {
@@ -1092,7 +1300,7 @@ func tsbHandler(w http.ResponseWriter, r *http.Request) {
 	var tsbs []TSB
 	for rows.Next() {
 		var t TSB
-		if err := rows.Scan(&t.ID, &t.ExternalID, &t.Make, &t.Model, &t.Year, &t.CommDate, &t.System, &t.Description); err != nil {
+		if err := rows.Scan(&t.ID, &t.ExternalID, &t.Make, &t.Model, &t.Year, &t.CommDate, &t.System, &t.Description, &t.TsbNumber, &t.TsbType, &t.Superseded); err != nil {
 			continue
 		}
 		tsbs = append(tsbs, t)

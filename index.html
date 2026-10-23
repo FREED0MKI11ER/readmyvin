@@ -680,16 +680,18 @@ function highlightSeverity(desc){
 }
 function renderTSBItem(t,isLoadMore,index=0){
   const date=parseTSBDate(t.comm_date);
-  const title=parseTSBTitle(t.external_id,t.description);
+  const title=t.tsb_number?t.tsb_number:parseTSBTitle(t.external_id,t.description);
   const category=getTSBCategory(t.description,t.system);
   const catClass=category?`tsb-cat-${category}`:'tsb-cat';
   const categoryHtml=category?`<span class="item-flag ${catClass}">${category}</span>`:'';
+  const typeTag=t.tsb_type?`<span class="tsb-system-tag">${esc(t.tsb_type)}</span>`:'';
+  const supFlag=t.superseded?`<span class="item-flag" style="background:#3a3f4b;color:#cbd5e1">superseded${t.superseded_by?' by '+esc(t.superseded_by):''}</span>`:'';
   const systemName=cleanSystemName(t.system);
   const systemHtml=systemName?`<span class="tsb-system-tag">${esc(systemName)}</span>`:'';
   const preview=truncateText(t.description,150);
   const bodyHtml=highlightSeverity(t.description||'No description available.');
   const delay=index>=0?`animation-delay:${index*50}ms`:'';
-  const itemHtml=`<div class="item-card tsb-card tsb-item" ${delay} data-cat="${category||''}" data-system="${esc(t.system||'')}" data-desc="${esc((t.description||'').toLowerCase())}"><div class="item-header" onclick="toggleItem(this)"><div class="item-left"><div class="item-title">${esc(title)}</div><div class="item-subtitle"><span>${date}</span>${categoryHtml}${systemHtml}</div>${preview?`<div class="tsb-preview">${esc(preview)}</div>`:''}</div><span class="item-chevron">&#9660;</span></div><div class="item-detail"><div class="item-detail-inner"><div class="item-body">${bodyHtml}</div></div></div></div>`;
+  const itemHtml=`<div class="item-card tsb-card tsb-item${t.superseded?' tsb-superseded':''}" ${delay}${t.superseded?' style="opacity:.6"':''} data-cat="${category||''}" data-system="${esc(t.system||'')}" data-desc="${esc((t.description||'').toLowerCase())}"><div class="item-header" onclick="toggleItem(this)"><div class="item-left"><div class="item-title">${esc(title)}</div><div class="item-subtitle"><span>${date}</span>${categoryHtml}${typeTag}${supFlag}${systemHtml}</div>${preview?`<div class="tsb-preview">${esc(preview)}</div>`:''}</div><span class="item-chevron">&#9660;</span></div><div class="item-detail"><div class="item-detail-inner"><div class="item-body">${bodyHtml}</div></div></div></div>`;
   if(isLoadMore){
     const tsbItems=document.querySelector('#tsb-section-container .tsb-items');
     if(tsbItems)tsbItems.insertAdjacentHTML('beforeend',itemHtml);
@@ -698,10 +700,26 @@ function renderTSBItem(t,isLoadMore,index=0){
   }
 }
 
+function reloadTSBs(cb){
+  const c=document.getElementById('tsb-section-container');
+  if(!c)return;
+  const placeholder=document.createElement('button');
+  placeholder.className='tsb-btn';
+  placeholder.dataset.make=c.dataset.make;
+  placeholder.dataset.model=c.dataset.model;
+  placeholder.dataset.year=c.dataset.year;
+  placeholder.dataset.search=c.dataset.search||'';
+  placeholder.dataset.includeSuperseded=cb.checked?'1':'';
+  placeholder.style.display='none';
+  c.replaceWith(placeholder);
+  loadTSBs(placeholder);
+}
+
 async function loadTSBs(btn){
   const make=btn.dataset.make,model=btn.dataset.model,year=btn.dataset.year;
   const offset=parseInt(btn.dataset.offset)||0;
   const search=btn.dataset.search||'';
+  const includeSuperseded=btn.dataset.includeSuperseded==='1';
   const isLoadMore=offset>0;
   
   if(!make||!model||!year){
@@ -718,6 +736,7 @@ async function loadTSBs(btn){
   try{
     let url=`/api/tsbs?make=${enc(make)}&model=${enc(model)}&year=${year}&max=20&offset=${offset}`;
     if(search)url+=`&search=${enc(search)}`;
+    if(includeSuperseded)url+='&include_superseded=1';
     const data=await apiFetch(url);
     const results=data.results||[];
     const total=data.total||0;
@@ -736,11 +755,12 @@ async function loadTSBs(btn){
     
     // First load - create header with search and filters
     if(offset===0){
-      tsbHtml='<div id="tsb-section-container">';
+      tsbHtml=`<div id="tsb-section-container" data-make="${esc(make)}" data-model="${esc(model)}" data-year="${esc(year)}" data-search="${esc(search)}" data-include-superseded="${includeSuperseded?'1':''}">`;
       tsbHtml+='<div class="section-title tsb-section"><div class="dot" style="background:var(--blue)"></div>TSBs & Service Bulletins</div>';
       tsbHtml+=`<div class="count-badge" id="tsb-count-badge">${total>0?total:results.length} bulletin${(total>0?total:results.length)>1?'s':''} found</div>`;
       // Search bar
       tsbHtml+=`<div class="tsb-search-bar"><input type="text" class="tsb-search-input" id="tsb-search" placeholder="Search TSBs..." data-make="${esc(make)}" data-model="${esc(model)}" data-year="${esc(year)}" oninput="filterTSBsLocal(this)"></div>`;
+      tsbHtml+=`<label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;cursor:pointer"><input type="checkbox" id="tsbShowSuperseded" ${includeSuperseded?'checked':''} onchange="reloadTSBs(this)"> Show superseded bulletins</label>`;
       // Category filter pills
       const cats=new Map();
       results.forEach(t=>{const c=getTSBCategory(t.description,t.system);if(c){cats.set(c,(cats.get(c)||0)+1)}});

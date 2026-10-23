@@ -77,16 +77,20 @@ curl -s localhost:8097/api/version
 systemctl list-timers readmyvin-update.timer
 ```
 
-## One-time reindex (v1.2.2+)
+## One-time rebuild (v1.2.3+)
 
-TSB search uses a case-insensitive vehicle index plus an FTS5 full-text index,
-built lazily. After the first deploy of v1.2.2+, run this **once** (it takes a
-few minutes and adds disk usage to `tsb.db`):
+TSB data now carries the real document number, a type, and supersession flags;
+search uses a case-insensitive vehicle index plus an FTS5 full-text index. After
+the first deploy of v1.2.3+, run this **once** (it re-downloads every TSBS file,
+rewrites `tsb.db`, detects superseded bulletins, builds indexes, and rebuilds
+FTS — several minutes + disk):
 
 ```bash
 cd /var/www/vindecoder
-./counter reindex
+sudo ./counter rebuild
 ```
 
-Until it finishes, search falls back to the old `LIKE` scan. New TSB rows are
-kept in the FTS index automatically afterwards (via a trigger).
+Until it finishes, behavior falls back to the old listing (empty new columns).
+Afterwards, new TSB rows stay indexed automatically via a trigger.
+
+`counter reindex` is still available to rebuild just the indexes/FTS.

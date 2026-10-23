@@ -77,7 +77,8 @@ See [`deploy/README.md`](deploy/README.md) for one-time server setup.
 go build -o counter counter.go
 ./counter            # serves on :8097; run from a dir where it can write its DBs
 ./counter import     # force a TSB re-import
-./counter reindex    # build search indexes (case-insensitive + FTS5); run once after upgrading
+./counter rebuild    # full accuracy migration: tsb_number/tsb_type, supersession, indexes, FTS
+./counter reindex    # just build search indexes (case-insensitive + FTS5)
 ./counter cleanup    # prune cached TSB zips older than 30 days
 ```
 
