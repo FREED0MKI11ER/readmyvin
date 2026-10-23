@@ -1,0 +1,14 @@
+[Unit]
+Description=VIN Decoder API (readmyvin)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/var/www/vindecoder
+ExecStart=/var/www/vindecoder/counter
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

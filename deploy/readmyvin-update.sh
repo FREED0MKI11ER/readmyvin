@@ -12,7 +12,7 @@ set -euo pipefail
 
 REPO="${READMYVIN_REPO:-FREED0MKI11ER/readmyvin}"
 WEBROOT="${READMYVIN_WEBROOT:-/var/www/vindecoder}"
-SERVICE="${READMYVIN_SERVICE:-counter}"          # systemd unit to restart
+SERVICE="${READMYVIN_SERVICE:-vindecoder}"       # systemd unit to restart
 BINARY="${READMYVIN_BINARY:-counter}"           # deployed binary filename in $WEBROOT
 HEALTH_URL="${READMYVIN_HEALTH_URL:-http://127.0.0.1:8097/counter}"
 STATE="${READMYVIN_STATE:-/var/lib/readmyvin/deployed.sha256}"
