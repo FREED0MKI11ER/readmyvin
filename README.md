@@ -2,7 +2,7 @@
 
 A free VIN decoder. Enter a 17-character VIN to get vehicle specs (from the
 NHTSA vPIC API), safety ratings, recalls, complaints, and service bulletins
-(TSBs), plus maintenance/fluid data.
+(TSBs).
 
 Live: https://readmyvin.com
 
@@ -41,7 +41,6 @@ go.mod / go.sum
 index.html dtc.html         pages
 scanner.js scanner.css sw.js
 manifest.json robots.txt sitemap.xml og-image.svg icon-*.png
-maintenance-data-v3.json    fluid/maintenance dataset served to the frontend
 deploy/                     server units + auto-updater (see deploy/README.md)
 .github/workflows/release.yml
 ```
